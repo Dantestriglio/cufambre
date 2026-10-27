@@ -156,6 +156,8 @@ node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
 
 Las tablas se definen con SQL en [`database/schema.sql`](database/schema.sql) (no hay carpeta `models/` porque no se usa ORM).
 
+> 📄 Detalle de cada tabla (PK, FK, tipos) y SQL listo para pegar en Neon o Vercel: **[BASE_DE_DATOS.md](BASE_DE_DATOS.md)** y [`database/neon_setup.sql`](database/neon_setup.sql).
+
 | Tabla | Campos |
 | --- | --- |
 | **Platos** | `id` INTEGER identidad (PK) · `tipo` VARCHAR(20) · `nombre` VARCHAR(70) · `precio` INTEGER · `descripcion` VARCHAR(400) |
