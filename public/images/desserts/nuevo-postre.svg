@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300" role="img" aria-label="Nuevo postre">
+<title>Nuevo postre</title>
+<ellipse cx="200" cy="276" rx="90" ry="9" fill="#292016" opacity=".14"/>
+    <path d="M150 150 L200 272 L250 150 Z" fill="#E3A65A" stroke="#292016" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M162 170 L232 192 M170 196 L224 214 M178 222 L216 236 M238 172 L172 194 M232 196 L180 216 M224 222 L188 238" stroke="#B8772E" stroke-width="3" stroke-linecap="round"/>
+    <path d="M140 152 C126 120 150 96 176 102 C186 80 222 80 230 104 C258 100 274 128 258 152 C250 162 240 160 236 152 C228 162 216 162 212 152 C204 162 192 162 188 152 C180 162 168 162 164 152 C156 162 144 162 140 152 Z" fill="#F7A9BD" stroke="#292016" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M160 112 q12 -10 26 -6" stroke="#FFD3DE" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M204 86 L204 34" stroke="#C9A06A" stroke-width="4" stroke-linecap="round"/>
+    <path d="M206 34 H246 V64 H206 Z" fill="#FFC83D" stroke="#292016" stroke-width="2.6" stroke-linejoin="round"/>
+    <path d="M220 45 q0 -6 6 -6 q6 0 6 5.5 q0 4 -6 6.5 v3.5" stroke="#292016" stroke-width="3.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="226" cy="59" r="2" fill="#292016"/>
+</svg>

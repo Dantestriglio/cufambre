@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300" role="img" aria-label="Sundae de Dulce de Leche">
+<title>Sundae de Dulce de Leche</title>
+<ellipse cx="200" cy="276" rx="120" ry="9" fill="#292016" opacity=".14"/>
+    <path d="M150 272 Q150 256 200 256 Q250 256 250 272 Z" fill="#E6F4FA" stroke="#292016" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M190 258 V214 H210 V258" fill="#E6F4FA" stroke="#292016" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M118 132 H282 C282 186 248 214 200 216 C152 214 118 186 118 132 Z" fill="#E6F4FA" stroke="#292016" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M124 140 H276 C272 182 244 206 200 208 C156 206 128 182 124 140 Z" fill="#FFF3DA"/>
+    <path d="M128 160 H272 C266 176 258 186 248 194 H152 C142 186 134 176 128 160 Z" fill="#B8692A" opacity=".85"/>
+    <path d="M140 178 H260" stroke="#FFF3DA" stroke-width="6" stroke-linecap="round"/>
+    <path d="M132 144 C130 160 136 182 150 196" stroke="#FFFFFF" stroke-width="6" fill="none" stroke-linecap="round" opacity=".8"/>
+    <circle cx="160" cy="126" r="32" fill="#FFF6E3" stroke="#292016" stroke-width="4"/>
+    <circle cx="240" cy="126" r="32" fill="#FFF6E3" stroke="#292016" stroke-width="4"/>
+    <circle cx="200" cy="110" r="36" fill="#FFF6E3" stroke="#292016" stroke-width="4"/>
+    <path d="M176 64 Q200 40 224 64 Q246 70 236 86 Q252 96 230 104 H170 Q148 96 164 86 Q154 70 176 64 Z" fill="#FFFFFF" stroke="#292016" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M172 88 Q200 98 228 88 M180 72 Q200 80 220 72" stroke="#E9DCC6" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M134 116 C150 100 176 104 186 112 C196 100 214 98 226 110 C240 100 260 104 268 118 C270 128 262 130 258 124 C254 136 248 142 244 130 C236 124 228 126 226 136 C222 150 214 150 212 134 C204 124 192 124 188 136 C184 146 176 146 176 132 C168 126 160 130 156 138 C152 146 144 144 146 132 C138 130 130 126 134 116 Z" fill="#A85A1E" stroke="#292016" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M150 112 q12 -6 24 -2 M206 104 q12 -4 22 2" stroke="#D88A46" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <ellipse cx="250" cy="100.3" rx="4.5" ry="3" transform="rotate(95 250 100.3)" fill="#D9A15A" stroke="#292016" stroke-width="1.4"/><ellipse cx="155.9" cy="93.9" rx="4.5" ry="3" transform="rotate(134 155.9 93.9)" fill="#D9A15A" stroke="#292016" stroke-width="1.4"/><ellipse cx="154.4" cy="93.9" rx="4.5" ry="3" transform="rotate(158 154.4 93.9)" fill="#D9A15A" stroke="#292016" stroke-width="1.4"/><ellipse cx="169" cy="99.8" rx="4.5" ry="3" transform="rotate(154 169 99.8)" fill="#D9A15A" stroke="#292016" stroke-width="1.4"/><ellipse cx="243.5" cy="93.7" rx="4.5" ry="3" transform="rotate(82 243.5 93.7)" fill="#D9A15A" stroke="#292016" stroke-width="1.4"/><ellipse cx="177.2" cy="102.9" rx="4.5" ry="3" transform="rotate(125 177.2 102.9)" fill="#D9A15A" stroke="#292016" stroke-width="1.4"/><ellipse cx="220" cy="120.1" rx="4.5" ry="3" transform="rotate(43 220 120.1)" fill="#D9A15A" stroke="#292016" stroke-width="1.4"/><ellipse cx="155.7" cy="120" rx="4.5" ry="3" transform="rotate(70 155.7 120)" fill="#D9A15A" stroke="#292016" stroke-width="1.4"/><ellipse cx="213" cy="104.7" rx="4.5" ry="3" transform="rotate(147 213 104.7)" fill="#D9A15A" stroke="#292016" stroke-width="1.4"/>
+    <path d="M206 44 Q212 24 230 16" stroke="#4E7A2A" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <circle cx="200" cy="50" r="15" fill="#D92D20" stroke="#292016" stroke-width="4"/>
+    <ellipse cx="195" cy="45" rx="5" ry="3.5" fill="#FF8A7E"/>
+</svg>

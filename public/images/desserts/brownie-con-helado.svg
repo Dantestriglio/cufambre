@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300" role="img" aria-label="Brownie con Helado">
+<title>Brownie con Helado</title>
+<ellipse cx="200" cy="252" rx="150" ry="26" fill="#FFFFFF" stroke="#292016" stroke-width="4"/>
+    <ellipse cx="200" cy="249" rx="120" ry="15" fill="none" stroke="#E9DCC6" stroke-width="3"/>
+    <path d="M118 172 L140 150 H302 L280 172 Z" fill="#7A4730" stroke="#292016" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M280 172 L302 150 V214 L280 238 Z" fill="#4A2918" stroke="#292016" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M118 172 H280 V238 H118 Z" fill="#5C3420" stroke="#292016" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M146 162 l18 -4 l10 6 M214 158 l16 4 l12 -5 M176 154 l12 2" stroke="#9A6143" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+    <circle cx="247.7" cy="206.4" r="3" fill="#3A1D10"/><circle cx="205.6" cy="221.5" r="2.7" fill="#3A1D10"/><circle cx="256.3" cy="203.5" r="2.1" fill="#3A1D10"/><circle cx="228.5" cy="220.6" r="2.5" fill="#3A1D10"/><circle cx="178.4" cy="226.1" r="2.6" fill="#3A1D10"/><circle cx="160.9" cy="195.6" r="3.1" fill="#3A1D10"/><circle cx="242.1" cy="197.6" r="2.4" fill="#3A1D10"/><circle cx="205.5" cy="193.5" r="2.6" fill="#3A1D10"/><circle cx="152.5" cy="205" r="2.5" fill="#3A1D10"/><circle cx="137.1" cy="221.4" r="2.3" fill="#3A1D10"/>
+    <path d="M150 156 C140 140 146 104 176 92 C196 70 236 72 252 96 C276 108 274 142 262 156 C258 166 248 166 244 158 C238 168 226 170 220 160 C212 170 196 170 190 160 C182 168 168 168 164 158 C160 164 152 164 150 156 Z" fill="#FFF6E3" stroke="#292016" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M168 104 C180 92 196 88 210 90" stroke="#FFFFFF" stroke-width="6" fill="none" stroke-linecap="round"/>
+    <path d="M160 142 C180 152 236 152 258 140" stroke="#F1DFC0" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M172 98 C190 80 232 78 248 100 C254 110 252 118 246 118 C240 128 236 136 232 124 C226 118 218 116 214 128 C210 140 204 140 202 124 C196 116 186 118 182 126 C178 132 172 130 174 118 C166 114 164 106 172 98 Z" fill="#3B1F14" stroke="#292016" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M186 96 q10 -6 22 -4" stroke="#7A4A32" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M128 172 C130 182 138 184 140 172 M242 172 C244 190 254 192 256 172" stroke="#3B1F14" stroke-width="6" fill="none" stroke-linecap="round"/>
+    <path d="M206 80 q-14 -22 6 -30 q10 20 -6 30 Z" fill="#5DB043" stroke="#292016" stroke-width="2.6" stroke-linejoin="round"/>
+    <path d="M210 80 q18 -16 30 -2 q-16 14 -30 2 Z" fill="#4E9A35" stroke="#292016" stroke-width="2.6" stroke-linejoin="round"/>
+</svg>

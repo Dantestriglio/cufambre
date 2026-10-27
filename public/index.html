@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CUFAMBRE · Hamburguesería</title>
+  <meta name="description" content="Hamburguesas smash, combos y postres. Pedí online en CUFAMBRE y seguí el estado de tu pedido.">
+  <meta name="theme-color" content="#D92D20">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@400;600;700;800;900&display=swap">
+  <link rel="stylesheet" href="css/styles.css">
+  <script type="module" src="js/app.js"></script>
+</head>
+<body>
+  <a class="saltar" href="#menu">Saltar al menú</a>
+
+  <header class="barra">
+    <div class="contenedor barra__interior">
+      <a class="marca" href="#inicio" aria-label="CUFAMBRE, ir al inicio">
+        <img src="images/logo.svg" alt="" width="44" height="44">
+        <span>CUFAMBRE</span>
+      </a>
+
+      <nav class="nav" aria-label="Secciones">
+        <a href="#menu">Menú</a>
+        <a href="#mis-pedidos" data-solo-sesion hidden>Mis pedidos</a>
+        <a href="#admin" data-solo-admin hidden>Panel admin</a>
+      </nav>
+
+      <div class="acciones">
+        <button class="boton boton--amarillo" id="boton-ingresar" type="button">Ingresar</button>
+        <div class="usuario" id="menu-usuario" hidden>
+          <span class="usuario__saludo">Hola, <strong id="nombre-usuario"></strong></span>
+          <span class="insignia insignia--admin" data-solo-admin hidden>Admin</span>
+          <button class="boton boton--fantasma" id="boton-salir" type="button">Salir</button>
+        </div>
+        <button class="boton-carrito" id="boton-carrito" type="button" aria-label="Abrir el carrito (0 productos)">
+          <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M6 7h12l-1 13H7L6 7Z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M9 7V6a3 3 0 0 1 6 0v1" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+          <span class="boton-carrito__contador" id="contador-carrito">0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" id="inicio">
+      <div class="contenedor hero__interior">
+        <div class="hero__texto">
+          <p class="etiqueta">Smash burgers · Combos · Postres</p>
+          <h1>¿Cufambre?<span>Nosotros lo resolvemos.</span></h1>
+          <p class="hero__bajada">Hamburguesas jugosas hechas al momento, papas crocantes y postres para cerrar con todo. Pedí online y seguí tu pedido desde que lo aceptamos hasta que llega a tu puerta.</p>
+          <div class="hero__botones">
+            <a class="boton boton--rojo boton--grande" href="#menu">Ver el menú</a>
+            <button class="boton boton--crema boton--grande" type="button" id="hero-mis-pedidos">Mis pedidos</button>
+          </div>
+          <ul class="hero__datos">
+            <li><strong>100%</strong> carne fresca</li>
+            <li><strong>Pan</strong> horneado cada día</li>
+            <li><strong>4 pasos</strong> para seguir tu pedido</li>
+          </ul>
+        </div>
+        <img class="hero__imagen" src="images/hero.svg" alt="Hamburguesa doble con cheddar y panceta, papas fritas y gaseosa" width="400" height="320">
+      </div>
+    </section>
+
+    <section class="seccion" id="menu" aria-labelledby="titulo-menu">
+      <div class="contenedor">
+        <div class="seccion__encabezado">
+          <h2 id="titulo-menu">El menú</h2>
+          <div class="filtros" id="filtros-menu" role="group" aria-label="Filtrar el menú por tipo">
+            <button type="button" class="filtro" data-tipo="" aria-pressed="true">Todo</button>
+            <button type="button" class="filtro" data-tipo="principal" aria-pressed="false">Hamburguesas</button>
+            <button type="button" class="filtro" data-tipo="combo" aria-pressed="false">Combos</button>
+            <button type="button" class="filtro" data-tipo="postre" aria-pressed="false">Postres</button>
+          </div>
+        </div>
+        <div class="grilla" id="grilla-platos" aria-live="polite" aria-busy="true">
+          <p class="estado-vacio">Cargando el menú…</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="seccion seccion--crema-oscuro" id="mis-pedidos" aria-labelledby="titulo-mis-pedidos" hidden>
+      <div class="contenedor">
+        <div class="seccion__encabezado">
+          <h2 id="titulo-mis-pedidos">Mis pedidos</h2>
+          <button class="boton boton--crema" type="button" id="actualizar-mis-pedidos">Actualizar</button>
+        </div>
+        <div class="pedidos" id="lista-mis-pedidos" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section class="seccion" id="admin" aria-labelledby="titulo-admin" hidden>
+      <div class="contenedor">
+        <div class="seccion__encabezado">
+          <h2 id="titulo-admin">Panel de administración</h2>
+          <div class="filtros" role="tablist" aria-label="Paneles de administración">
+            <button type="button" class="filtro" role="tab" id="pestana-pedidos" aria-controls="panel-pedidos" aria-selected="true" data-panel="pedidos">Pedidos</button>
+            <button type="button" class="filtro" role="tab" id="pestana-platos" aria-controls="panel-platos" aria-selected="false" data-panel="platos">Platos</button>
+          </div>
+        </div>
+
+        <div class="panel" id="panel-pedidos" role="tabpanel" aria-labelledby="pestana-pedidos">
+          <div class="panel__herramientas">
+            <div class="filtros filtros--chicos" id="filtros-estado" role="group" aria-label="Filtrar pedidos por estado"></div>
+            <button class="boton boton--crema" type="button" id="actualizar-pedidos">Actualizar</button>
+          </div>
+          <div class="pedidos" id="lista-pedidos-admin" aria-live="polite"></div>
+        </div>
+
+        <div class="panel" id="panel-platos" role="tabpanel" aria-labelledby="pestana-platos" hidden>
+          <div class="admin-platos">
+            <form class="formulario tarjeta-borde" id="form-plato" novalidate>
+              <h3 id="titulo-form-plato">Nuevo plato</h3>
+              <label>Tipo
+                <select name="tipo" required>
+                  <option value="principal">Hamburguesa (principal)</option>
+                  <option value="combo">Combo</option>
+                  <option value="postre">Postre</option>
+                </select>
+              </label>
+              <label>Nombre
+                <input name="nombre" maxlength="70" required autocomplete="off">
+              </label>
+              <label>Precio (en pesos, sin decimales)
+                <input name="precio" type="number" min="0" step="1" inputmode="numeric" required>
+              </label>
+              <label>Descripción
+                <textarea name="descripcion" maxlength="400" rows="4" required></textarea>
+              </label>
+              <p class="formulario__error" id="error-form-plato" role="alert" hidden></p>
+              <div class="formulario__botones">
+                <button class="boton boton--rojo" type="submit" id="guardar-plato">Crear plato</button>
+                <button class="boton boton--crema" type="button" id="cancelar-edicion" hidden>Cancelar edición</button>
+              </div>
+            </form>
+            <div class="tabla-platos" id="tabla-platos" aria-live="polite"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="pie">
+    <div class="contenedor pie__interior">
+      <div class="marca marca--pie">
+        <img src="images/logo.svg" alt="" width="40" height="40">
+        <span>CUFAMBRE</span>
+      </div>
+      <p>Av. Siempre Hambrienta 742 · Todos los días de 12 a 24 h</p>
+      <p class="pie__nota">Hamburguesería ficticia · Proyecto académico con API REST (consigna BurgerTIC)</p>
+    </div>
+  </footer>
+
+  <dialog class="cajon" id="carrito" aria-labelledby="titulo-carrito">
+    <div class="cajon__interior">
+      <header class="cajon__encabezado">
+        <h2 id="titulo-carrito">Tu pedido</h2>
+        <button class="boton-cerrar" type="button" data-cerrar aria-label="Cerrar el carrito">×</button>
+      </header>
+      <div class="cajon__cuerpo" id="items-carrito"></div>
+      <footer class="cajon__pie">
+        <div class="total"><span>Total</span><strong id="total-carrito">$ 0</strong></div>
+        <p class="cajon__aviso" id="aviso-carrito" hidden></p>
+        <button class="boton boton--rojo boton--ancho" type="button" id="confirmar-pedido">Confirmar pedido</button>
+      </footer>
+    </div>
+  </dialog>
+
+  <dialog class="modal" id="modal-auth" aria-labelledby="titulo-auth">
+    <div class="modal__interior">
+      <button class="boton-cerrar" type="button" data-cerrar aria-label="Cerrar">×</button>
+      <img class="modal__icono" src="images/logo.svg" alt="" width="56" height="56">
+      <h2 id="titulo-auth">¡Hola de nuevo!</h2>
+      <div class="filtros filtros--centrados" role="tablist" aria-label="Ingresar o crear cuenta">
+        <button type="button" class="filtro" role="tab" aria-selected="true" aria-controls="form-login" data-auth="login">Ingresar</button>
+        <button type="button" class="filtro" role="tab" aria-selected="false" aria-controls="form-registro" data-auth="registro">Crear cuenta</button>
+      </div>
+
+      <form class="formulario" id="form-login" novalidate>
+        <label>Email
+          <input name="email" type="email" autocomplete="email" required>
+        </label>
+        <label>Contraseña
+          <input name="password" type="password" autocomplete="current-password" required>
+        </label>
+        <p class="formulario__error" role="alert" hidden></p>
+        <button class="boton boton--rojo boton--ancho" type="submit">Ingresar</button>
+      </form>
+
+      <form class="formulario" id="form-registro" novalidate hidden>
+        <div class="formulario__fila">
+          <label>Nombre
+            <input name="nombre" maxlength="50" autocomplete="given-name" required>
+          </label>
+          <label>Apellido
+            <input name="apellido" maxlength="50" autocomplete="family-name" required>
+          </label>
+        </div>
+        <label>Email
+          <input name="email" type="email" maxlength="256" autocomplete="email" required>
+        </label>
+        <label>Contraseña <small>(mínimo 6 caracteres)</small>
+          <input name="password" type="password" minlength="6" maxlength="72" autocomplete="new-password" required>
+        </label>
+        <p class="formulario__error" role="alert" hidden></p>
+        <button class="boton boton--rojo boton--ancho" type="submit">Crear cuenta</button>
+      </form>
+    </div>
+  </dialog>
+
+  <div class="avisos" id="avisos" aria-live="polite" aria-atomic="false"></div>
+</body>
+</html>

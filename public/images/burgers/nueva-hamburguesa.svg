@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300" role="img" aria-label="Nueva hamburguesa">
+<title>Nueva hamburguesa</title>
+<ellipse cx="200" cy="274" rx="160" ry="11" fill="#292016" opacity=".14"/><g transform="translate(200 268) scale(1) translate(-200 0)">
+      <path d="M78 -28 Q78 -34 90 -34 H310 Q322 -34 322 -28 L316 -10 Q312 0 294 0 H106 Q88 0 84 -10 Z" fill="#F4B942" stroke="#292016" stroke-width="4" stroke-linejoin="round"/>
+      <path d="M84 -30 H316 L315 -23 H85 Z" fill="#FCE6AE"/>
+      <path d="M96 -7 Q200 -3 304 -7" stroke="#D9952B" stroke-width="4" fill="none" stroke-linecap="round" opacity=".7"/>
+      <path d="M62 -35 Q66 -41 80 -39 Q200 -45 320 -39 Q334 -41 338 -35 L338 -31 Q326.5 -21 315 -31 Q303.5 -33 292 -31 Q280.5 -21 269 -31 Q257.5 -33 246 -31 Q234.5 -21 223 -31 Q211.5 -33 200 -31 Q188.5 -21 177 -31 Q165.5 -33 154 -31 Q142.5 -21 131 -31 Q119.5 -33 108 -31 Q96.5 -21 85 -31 Q73.5 -33 62 -31 Z" fill="#76C24F" stroke="#292016" stroke-width="3.5" stroke-linejoin="round"/>
+      <path d="M96 -35 q12 6 22 2 M170 -36 q14 7 26 1 M248 -35 q12 6 24 1" stroke="#4E9A35" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M66 -58 Q66 -66 80 -65 Q120 -68 160 -65 Q200 -63 240 -66 Q290 -68 320 -65 Q334 -64 334 -56 L334 -46 Q334 -36 318 -36 Q260 -33 200 -36 Q140 -33 82 -36 Q66 -36 66 -46 Z" fill="#7A4128" stroke="#292016" stroke-width="4" stroke-linejoin="round"/>
+      <path d="M86 -59 Q200 -64 314 -59" stroke="#A3613B" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+      <circle cx="200.5" cy="-42.3" r="2.6" fill="#4A2414"/><circle cx="272.5" cy="-49.7" r="2.2" fill="#4A2414"/><circle cx="128.5" cy="-55.7" r="1.5" fill="#4A2414"/><circle cx="319.2" cy="-42.2" r="1.6" fill="#4A2414"/><circle cx="174.3" cy="-50.8" r="2.2" fill="#4A2414"/><circle cx="302.2" cy="-52.3" r="2.9" fill="#4A2414"/><circle cx="304.6" cy="-54.5" r="2.1" fill="#4A2414"/><circle cx="246.9" cy="-48.7" r="2.3" fill="#4A2414"/><circle cx="150.7" cy="-51.5" r="2.1" fill="#4A2414"/><circle cx="204.1" cy="-56.3" r="2.3" fill="#4A2414"/><circle cx="89.2" cy="-55.8" r="1.8" fill="#4A2414"/><circle cx="115.2" cy="-55.6" r="1.7" fill="#4A2414"/><circle cx="264.2" cy="-49.3" r="2.2" fill="#4A2414"/><circle cx="231.1" cy="-44.3" r="1.7" fill="#4A2414"/><circle cx="186.7" cy="-42.3" r="1.8" fill="#4A2414"/><circle cx="269.5" cy="-46.1" r="1.6" fill="#4A2414"/><circle cx="223.4" cy="-42.9" r="2.5" fill="#4A2414"/><circle cx="83.8" cy="-45.1" r="2.7" fill="#4A2414"/><circle cx="228.1" cy="-44.2" r="2.4" fill="#4A2414"/><circle cx="173.3" cy="-52" r="2.8" fill="#4A2414"/><circle cx="108.9" cy="-50.8" r="1.8" fill="#4A2414"/><circle cx="93.9" cy="-43" r="2.2" fill="#4A2414"/>
+      <path d="M70 -70 H330 V-62 L293 -62 C291 -53.6 287 -48 280 -48 C273 -48 269 -53.6 267 -62 L213 -62 C211 -51.2 207 -44 200 -44 C193 -44 189 -51.2 187 -62 L139 -62 C137 -54.8 133 -50 126 -50 C119 -50 115 -54.8 113 -62 L70 -62 Z" fill="#FFB51F" stroke="#292016" stroke-width="3.5" stroke-linejoin="round"/>
+      <path d="M80 -67 H320" stroke="#FFD86E" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M76 -74 C76 -128 132 -146 200 -146 C268 -146 324 -128 324 -74 Q324 -68 316 -68 H84 Q76 -68 76 -74 Z" fill="#F4B942" stroke="#292016" stroke-width="4" stroke-linejoin="round"/>
+      <path d="M82 -84 Q200 -76 318 -84 L318 -74 Q318 -71 314 -71 H86 Q82 -71 82 -74 Z" fill="#D9952B" opacity=".55"/>
+      <ellipse cx="146" cy="-122" rx="40" ry="11" transform="rotate(-14 146 -122)" fill="#FFE39A" opacity=".85"/>
+      <ellipse cx="112" cy="-106" rx="9" ry="5" transform="rotate(-40 112 -106)" fill="#FFE39A" opacity=".7"/>
+      <path d="M204 -132 L204 -192" stroke="#C9A06A" stroke-width="4" stroke-linecap="round"/><path d="M204 -132 L204 -192" stroke="#292016" stroke-width="1.4" stroke-linecap="round" opacity=".5"/>
+      <path d="M206 -192 H246 V-162 H206 Z" fill="#FFC83D" stroke="#292016" stroke-width="2.6" stroke-linejoin="round"/>
+      <path d="M220 -181 q0 -6 6 -6 q6 0 6 5.5 q0 4 -6 6.5 v3.5" stroke="#292016" stroke-width="3.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="226" cy="-167" r="2" fill="#292016"/></g>
+</svg>
