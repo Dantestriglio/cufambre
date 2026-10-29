@@ -3,7 +3,8 @@
  *
  * Las pruebas se conectan a TEST_DATABASE_URL (nunca a la base de producción),
  * levantan la API en un puerto libre y al terminar borran SOLO los datos que
- * crearon: usuarios con email @test.cufambre, sus pedidos y platos "TEST ...".
+ * crearon: usuarios con email @test.kingsciarra, sus pedidos y los platos e
+ * ingredientes "TEST ...".
  */
 require('dotenv').config({ quiet: true });
 const assert = require('node:assert/strict');
@@ -16,14 +17,14 @@ if (!process.env.TEST_DATABASE_URL) {
 process.env.DATABASE_URL = process.env.TEST_DATABASE_URL;
 process.env.NODE_ENV = 'test';
 if (!process.env.JWT_SECRET || /^\*+$/.test(process.env.JWT_SECRET.trim())) {
-  process.env.JWT_SECRET = 'clave-solo-para-las-pruebas-automaticas-de-cufambre';
+  process.env.JWT_SECRET = 'clave-solo-para-las-pruebas-automaticas-de-king-sciarra';
 }
 
 const app = require('../main');
 const { pool, cerrarConexiones } = require('../dbconfig');
 const { inicializarBaseDeDatos } = require('../database/init');
 
-const DOMINIO_DE_PRUEBA = '@test.cufambre';
+const DOMINIO_DE_PRUEBA = '@test.kingsciarra';
 const PREFIJO_DE_PLATOS = 'TEST ';
 
 /** Levanta la API en un puerto libre y devuelve una función para llamarla. */
@@ -95,8 +96,26 @@ async function crearPlatoDePrueba({ tipo = 'principal', nombre = 'Hamburguesa', 
   return rows[0];
 }
 
+/** Inserta un ingrediente directamente en la base (nombre con prefijo "TEST "). */
+async function crearIngredienteDePrueba({ nombre = 'Ingrediente', precio = 100, disponible = true } = {}) {
+  const sufijo = Math.random().toString(36).slice(2, 8);
+  const { rows } = await pool.query(
+    'INSERT INTO Ingredientes (nombre, precio, disponible) VALUES ($1, $2, $3) RETURNING id, nombre, precio, disponible',
+    [`${PREFIJO_DE_PLATOS}${nombre} ${sufijo}`, precio, disponible]
+  );
+  return rows[0];
+}
+
+/** Asigna un ingrediente a un plato: incluido = viene en el plato, maximo = extras permitidos. */
+async function asignarIngrediente(plato, ingrediente, { incluido = false, maximo = 0 } = {}) {
+  await pool.query(
+    'INSERT INTO IngredientesXPlatos (id_plato, id_ingrediente, incluido, maximo) VALUES ($1, $2, $3, $4)',
+    [plato.id, ingrediente.id, incluido, maximo]
+  );
+}
+
 async function limpiarDatosDePrueba() {
-  // Los pedidos arrastran sus filas de PlatosXPedidos (ON DELETE CASCADE)
+  // Los pedidos arrastran sus filas de PlatosXPedidos y Personalizaciones (ON DELETE CASCADE)
   await pool.query(
     `DELETE FROM Pedidos WHERE id_usuario IN (SELECT id FROM Usuarios WHERE email LIKE '%' || $1)`,
     [DOMINIO_DE_PRUEBA]
@@ -104,6 +123,11 @@ async function limpiarDatosDePrueba() {
   await pool.query(`DELETE FROM Usuarios WHERE email LIKE '%' || $1`, [DOMINIO_DE_PRUEBA]);
   await pool.query(
     `DELETE FROM Platos WHERE nombre LIKE $1 || '%' AND id NOT IN (SELECT id_plato FROM PlatosXPedidos)`,
+    [PREFIJO_DE_PLATOS]
+  );
+  await pool.query(
+    `DELETE FROM Ingredientes WHERE nombre LIKE $1 || '%'
+        AND id NOT IN (SELECT id_ingrediente FROM Personalizaciones)`,
     [PREFIJO_DE_PLATOS]
   );
 }
@@ -123,6 +147,8 @@ module.exports = {
   iniciarApi,
   crearUsuario,
   crearPlatoDePrueba,
+  crearIngredienteDePrueba,
+  asignarIngrediente,
   emailDePrueba,
   fechaDeHoyEnArgentina,
   inicializarBaseDeDatos,

@@ -8,11 +8,15 @@ const express = require('express');
 const platosRouter = require('./platosRouter');
 const authRouter = require('./authRouter');
 const pedidosRouter = require('./pedidosRouter');
+const ingredientesRouter = require('./ingredientesRouter');
+const usuariosRouter = require('./usuariosRouter');
 
 const router = express.Router();
 
 router.use('/platos', platosRouter);
 router.use('/auth', authRouter);
 router.use('/pedidos', pedidosRouter);
+router.use('/ingredientes', ingredientesRouter);
+router.use('/usuarios', usuariosRouter);
 
 module.exports = router;

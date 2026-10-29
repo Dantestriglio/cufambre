@@ -1,13 +1,15 @@
-// CUFAMBRE · Frontend principal: menú, carrito, ingreso/registro y "Mis pedidos".
+// King Sciarra · Frontend principal: menú, personalización, carrito, ingreso/registro y "Mis pedidos".
 import { api, configurarNoAutorizado } from './api.js';
 import * as sesion from './sesion.js';
 import * as carrito from './carrito.js';
 import * as admin from './admin.js';
+import { cargarOpciones, esPersonalizable, precioUnitario, depurarLinea, describirLinea } from './opciones.js';
+import { iniciarPersonalizador, abrirPersonalizador } from './personalizar.js';
 import { imagenDePlato } from './imagenes.js';
 import { esc, formatearPrecio, avisar } from './utilidades.js';
-import { etiquetaEstado, tarjetaPedido } from './vistas.js';
+import { etiquetaEstado, tarjetaPedido, detallePersonalizacion } from './vistas.js';
 
-const TIPOS = { principal: 'Hamburguesa', combo: 'Combo', postre: 'Postre' };
+const TIPOS = { principal: 'Hamburguesa', combo: 'Combo', postre: 'Postre', bebida: 'Bebida' };
 const INTERVALO_ACTUALIZACION = 30_000;
 const $ = (id) => document.getElementById(id);
 
@@ -19,11 +21,19 @@ const estado = {
   volverAlCarrito: false,
 };
 
+const platoPorId = (id) => estado.platos.find((plato) => plato.id === id);
+
 // ---------------- Menú ----------------
 async function cargarMenu() {
   try {
-    estado.platos = await api.listarPlatos();
-    carrito.sincronizarCarrito(new Set(estado.platos.map((plato) => plato.id)));
+    const [platos, opciones] = await Promise.all([
+      api.listarPlatos(),
+      // Sin opciones el menú igual funciona: solo no se puede personalizar
+      api.opcionesDelMenu().catch(() => []),
+    ]);
+    estado.platos = platos;
+    cargarOpciones(opciones);
+    carrito.sincronizarCarrito(new Set(estado.platos.map((plato) => plato.id)), depurarLinea);
     await aplicarFiltro(estado.filtro);
     if (sesion.esAdmin()) admin.mostrarPlatos(estado.platos);
     renderizarCarrito();
@@ -48,11 +58,38 @@ async function aplicarFiltro(tipo) {
   renderizarMenu();
 }
 
-function controlCantidad(plato, cantidad) {
-  return `<div class="cantidad" role="group" aria-label="Cantidad de ${esc(plato.nombre)}">
-      <button type="button" data-restar="${Number(plato.id)}" aria-label="Quitar uno">−</button>
+/** Botones − cantidad + . `datos` son los atributos que identifican qué se suma o resta. */
+function controlCantidad(nombre, cantidad, { sumar, restar }) {
+  return `<div class="cantidad" role="group" aria-label="Cantidad de ${esc(nombre)}">
+      <button type="button" ${restar} aria-label="Quitar uno">−</button>
       <output>${cantidad}</output>
-      <button type="button" data-sumar="${Number(plato.id)}" aria-label="Agregar uno" ${cantidad >= carrito.CANTIDAD_MAXIMA ? 'disabled' : ''}>+</button>
+      <button type="button" ${sumar} aria-label="Agregar uno" ${cantidad >= carrito.CANTIDAD_MAXIMA ? 'disabled' : ''}>+</button>
+    </div>`;
+}
+
+// Hamburguesas y combos se arman en la ventana de personalización; postres y
+// bebidas se agregan directo y, si admiten cambios, ofrecen además personalizarlos.
+const SE_ARMAN = new Set(['principal', 'combo']);
+
+function accionesDeTarjeta(plato) {
+  const id = Number(plato.id);
+  const personalizable = esPersonalizable(plato.id);
+  if (personalizable && SE_ARMAN.has(plato.tipo)) {
+    const enPedido = carrito.cantidadDe(plato.id);
+    return `<div class="tarjeta__acciones">
+        ${enPedido > 0 ? `<span class="en-pedido">${enPedido} en tu pedido</span>` : ''}
+        <button class="boton boton--rojo" type="button" data-personalizar="${id}">Personalizar</button>
+      </div>`;
+  }
+  const cantidad = carrito.cantidadSimpleDe(plato.id);
+  const agregar =
+    cantidad > 0
+      ? controlCantidad(plato.nombre, cantidad, { sumar: `data-sumar="${id}"`, restar: `data-restar="${id}"` })
+      : `<button class="boton boton--rojo" type="button" data-sumar="${id}">Agregar</button>`;
+  if (!personalizable) return agregar;
+  return `<div class="tarjeta__acciones">
+      ${agregar}
+      <button class="enlace" type="button" data-personalizar="${id}">Personalizar</button>
     </div>`;
 }
 
@@ -64,19 +101,20 @@ function renderizarMenu() {
   }
   grilla.innerHTML = estado.visibles
     .map((plato) => {
-      const cantidad = carrito.cantidadDe(plato.id);
       const tipo = esc(plato.tipo);
+      const personalizable = esPersonalizable(plato.id);
       return `<article class="tarjeta tarjeta--${tipo}">
         <div class="tarjeta__imagen">
           <img src="${imagenDePlato(plato)}" alt="${esc(plato.nombre)}" width="400" height="300" loading="lazy">
+          ${personalizable ? '<span class="sello">Personalizable</span>' : ''}
         </div>
         <div class="tarjeta__cuerpo">
           <span class="chip chip--${tipo}">${TIPOS[plato.tipo] ?? tipo}</span>
           <h3>${esc(plato.nombre)}</h3>
           <p>${esc(plato.descripcion)}</p>
           <div class="tarjeta__pie">
-            <span class="precio">${formatearPrecio(plato.precio)}</span>
-            ${cantidad > 0 ? controlCantidad(plato, cantidad) : `<button class="boton boton--rojo" type="button" data-sumar="${Number(plato.id)}">Agregar</button>`}
+            <span class="precio">${personalizable ? '<small>desde</small>' : ''}${formatearPrecio(plato.precio)}</span>
+            ${accionesDeTarjeta(plato)}
           </div>
         </div>
       </article>`;
@@ -85,38 +123,45 @@ function renderizarMenu() {
 }
 
 // ---------------- Carrito ----------------
-function itemsConDatos() {
+function lineasConDatos() {
   return carrito
-    .itemsDelCarrito()
-    .map((item) => ({ ...item, plato: estado.platos.find((plato) => plato.id === item.id) }))
+    .lineasDelCarrito()
+    .map((linea, indice) => ({ linea, indice, plato: platoPorId(linea.id) }))
     .filter((item) => item.plato);
 }
 
 function renderizarCarrito() {
-  const items = itemsConDatos();
-  const unidades = items.reduce((total, item) => total + item.cantidad, 0);
+  const items = lineasConDatos();
+  const unidades = items.reduce((total, { linea }) => total + linea.cantidad, 0);
   $('contador-carrito').textContent = unidades;
   $('boton-carrito').setAttribute('aria-label', `Abrir el carrito (${unidades} ${unidades === 1 ? 'producto' : 'productos'})`);
 
   $('items-carrito').innerHTML = items.length
     ? items
-        .map(
-          ({ plato, cantidad }) => `<div class="item-carrito">
+        .map(({ linea, indice, plato }) => {
+          const editar = esPersonalizable(plato.id)
+            ? `<button class="enlace" type="button" data-editar-linea="${indice}">Editar</button>`
+            : '';
+          return `<div class="item-carrito">
             <img src="${imagenDePlato(plato)}" alt="" width="68" height="52">
-            <div class="item-carrito__nombre">${esc(plato.nombre)}</div>
+            <div class="item-carrito__nombre">${esc(plato.nombre)} ${editar}</div>
+            ${detallePersonalizacion(describirLinea(linea))}
             <div class="item-carrito__fila">
-              ${controlCantidad(plato, cantidad)}
-              <span class="item-carrito__subtotal">${formatearPrecio(plato.precio * cantidad)}</span>
+              ${controlCantidad(plato.nombre, linea.cantidad, {
+                sumar: `data-sumar-linea="${indice}"`,
+                restar: `data-restar-linea="${indice}"`,
+              })}
+              <span class="item-carrito__subtotal">${formatearPrecio(precioUnitario(plato, linea) * linea.cantidad)}</span>
             </div>
-          </div>`
-        )
+          </div>`;
+        })
         .join('')
     : `<div class="carrito-vacio">
         <img src="images/burgers/nueva-hamburguesa.svg" alt="" width="160" height="120">
         <p>Tu carrito está vacío.<br>¡Elegí algo rico del menú!</p>
       </div>`;
 
-  const total = items.reduce((suma, item) => suma + item.plato.precio * item.cantidad, 0);
+  const total = items.reduce((suma, { linea, plato }) => suma + precioUnitario(plato, linea) * linea.cantidad, 0);
   $('total-carrito').textContent = formatearPrecio(total);
 
   const conSesion = Boolean(sesion.obtenerToken());
@@ -131,19 +176,26 @@ function renderizarCarrito() {
 /** Vuelve a dibujar sin perder el foco del teclado en los botones + y −. */
 function redibujarConFoco() {
   const activo = document.activeElement;
-  const id = activo?.dataset?.sumar ?? activo?.dataset?.restar;
-  const atributo = activo?.dataset?.sumar ? 'data-sumar' : 'data-restar';
+  const atributo = ['sumar', 'restar', 'sumarLinea', 'restarLinea'].find((clave) => activo?.dataset?.[clave] !== undefined);
   const contenedor = activo?.closest?.('#carrito') ? $('carrito') : $('grilla-platos');
+  const valor = atributo ? activo.dataset[atributo] : null;
   renderizarMenu();
   renderizarCarrito();
-  if (id) {
-    (contenedor.querySelector(`[${atributo}="${id}"]`) ?? contenedor.querySelector(`[data-sumar="${id}"]`))?.focus();
-  }
+  if (!atributo) return;
+  const nombre = `data-${atributo.replace(/[A-Z]/g, (letra) => `-${letra.toLowerCase()}`)}`;
+  const otro = nombre.includes('sumar') ? nombre.replace('sumar', 'restar') : nombre.replace('restar', 'sumar');
+  (contenedor.querySelector(`[${nombre}="${valor}"]`) ?? contenedor.querySelector(`[${otro}="${valor}"]`))?.focus();
 }
 
 function abrirCarrito() {
   renderizarCarrito();
   if (!$('carrito').open) $('carrito').showModal();
+}
+
+function animarCarrito() {
+  const icono = $('boton-carrito');
+  icono.classList.remove('rebote');
+  requestAnimationFrame(() => icono.classList.add('rebote'));
 }
 
 async function confirmarPedido() {
@@ -152,7 +204,13 @@ async function confirmarPedido() {
     abrirAuth('login', { volverAlCarrito: true });
     return;
   }
-  const platos = carrito.itemsDelCarrito().map(({ id, cantidad }) => ({ id, cantidad }));
+  const platos = carrito.lineasDelCarrito().map(({ id, cantidad, extras, sin, aclaracion }) => ({
+    id,
+    cantidad,
+    extras,
+    sin,
+    aclaracion,
+  }));
   if (platos.length === 0) return;
 
   const boton = $('confirmar-pedido');
@@ -166,7 +224,8 @@ async function confirmarPedido() {
     await cargarMisPedidos();
     $('mis-pedidos').scrollIntoView({ behavior: 'smooth' });
   } catch (error) {
-    if (error.status === 404) await cargarMenu(); // algún plato ya no existe
+    // 404: algún plato ya no existe · 400: algún extra dejó de estar disponible
+    if (error.status === 404 || error.status === 400) await cargarMenu();
     if (error.status !== 401) avisar(error.message, 'error');
   } finally {
     renderizarCarrito();
@@ -298,14 +357,38 @@ async function cargarMisPedidos({ silencioso = false } = {}) {
   }
 }
 
-function alCambiarSesion(actual, motivo) {
+/** Trae de la API los datos actuales del usuario: otro administrador pudo cambiarle el rol. */
+async function refrescarPerfil() {
+  const token = sesion.obtenerToken();
+  if (!token) return;
+  try {
+    sesion.actualizarUsuario(await api.perfil(token));
+  } catch {
+    // 401 ya cierra la sesión; ante otros errores se mantiene lo que había
+  }
+}
+
+function cargarDatosDeAdmin() {
+  admin.mostrarPlatos(estado.platos);
+  admin.cargarTodo();
+}
+
+function alCambiarSesion(actual, motivo, anterior) {
   renderizarCabecera();
+  if (motivo === 'actualizacion') {
+    const eraAdmin = anterior?.usuario?.admin === true;
+    if (sesion.esAdmin() && !eraAdmin) {
+      avisar('Ahora tenés permisos de administrador.', 'exito');
+      cargarDatosDeAdmin();
+    } else if (!sesion.esAdmin() && eraAdmin) {
+      admin.limpiarAdmin();
+      avisar('Ya no tenés permisos de administrador.');
+    }
+    return;
+  }
   if (actual) {
     cargarMisPedidos();
-    if (sesion.esAdmin()) {
-      admin.mostrarPlatos(estado.platos);
-      admin.cargarPedidos();
-    }
+    if (sesion.esAdmin()) cargarDatosDeAdmin();
     return;
   }
   // Sin sesión: no deben quedar a la vista datos del usuario anterior
@@ -328,17 +411,44 @@ function conectarEventos() {
   });
 
   document.addEventListener('click', (evento) => {
-    const sumar = evento.target.closest('[data-sumar]');
-    const restar = evento.target.closest('[data-restar]');
-    if (sumar) {
-      carrito.cambiarCantidad(Number(sumar.dataset.sumar), 1);
-      const icono = $('boton-carrito');
-      icono.classList.remove('rebote');
-      requestAnimationFrame(() => icono.classList.add('rebote'));
+    const boton = evento.target.closest('button');
+    if (!boton) return;
+    const { dataset } = boton;
+    if (dataset.sumar) {
+      carrito.cambiarCantidadSimple(Number(dataset.sumar), 1);
+      animarCarrito();
+    } else if (dataset.restar) {
+      carrito.cambiarCantidadSimple(Number(dataset.restar), -1);
+    } else if (dataset.sumarLinea) {
+      carrito.cambiarCantidadLinea(Number(dataset.sumarLinea), 1);
+    } else if (dataset.restarLinea) {
+      carrito.cambiarCantidadLinea(Number(dataset.restarLinea), -1);
+    } else if (dataset.personalizar) {
+      const plato = platoPorId(Number(dataset.personalizar));
+      if (plato) abrirPersonalizador(plato);
+    } else if (dataset.editarLinea) {
+      const indice = Number(dataset.editarLinea);
+      const linea = carrito.lineasDelCarrito()[indice];
+      const plato = linea && platoPorId(linea.id);
+      if (!plato) return;
+      $('carrito').close();
+      abrirPersonalizador(plato, { indice, linea });
     }
-    if (restar) carrito.cambiarCantidad(Number(restar.dataset.restar), -1);
   });
   carrito.alCambiarCarrito(redibujarConFoco);
+
+  iniciarPersonalizador({
+    obtenerBebidas: () => estado.platos.filter((plato) => plato.tipo === 'bebida'),
+    alConfirmar: ({ editando, plato, bebidas }) => {
+      if (editando) {
+        abrirCarrito();
+        return;
+      }
+      animarCarrito();
+      const extra = bebidas > 0 ? ` y ${bebidas === 1 ? 'una bebida' : `${bebidas} bebidas`}` : '';
+      avisar(`Agregaste ${plato.nombre}${extra} a tu pedido.`, 'exito');
+    },
+  });
 
   $('boton-carrito').addEventListener('click', abrirCarrito);
   $('confirmar-pedido').addEventListener('click', confirmarPedido);
@@ -378,13 +488,15 @@ function iniciar() {
   cargarMenu();
   if (sesion.obtenerToken()) {
     cargarMisPedidos();
-    if (sesion.esAdmin()) admin.cargarPedidos();
+    if (sesion.esAdmin()) admin.cargarTodo();
+    refrescarPerfil();
   }
 
-  // Seguimiento del pedido: se consulta el estado cada 30 segundos
+  // Seguimiento del pedido y del rol: se consultan cada 30 segundos
   setInterval(() => {
     if (document.visibilityState !== 'visible' || !sesion.obtenerToken()) return;
     cargarMisPedidos({ silencioso: true });
+    refrescarPerfil();
     if (sesion.esAdmin()) admin.cargarPedidos({ silencioso: true });
   }, INTERVALO_ACTUALIZACION);
 }

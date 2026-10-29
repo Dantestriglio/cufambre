@@ -1,4 +1,4 @@
-// Cliente de la API REST de CUFAMBRE (mismo origen que el frontend).
+// Cliente de la API REST de King Sciarra (mismo origen que el frontend).
 
 export class ErrorApi extends Error {
   constructor(status, mensaje) {
@@ -48,9 +48,20 @@ export const api = {
   actualizarPlato: (token, id, plato) => pedir(`/platos/${id}`, { metodo: 'PUT', cuerpo: plato, token }),
   eliminarPlato: (token, id) => pedir(`/platos/${id}`, { metodo: 'DELETE', token }),
 
+  // Ingredientes y opciones de cada plato
+  opcionesDelMenu: () => pedir('/platos/opciones'),
+  opcionesDePlato: (id) => pedir(`/platos/${id}/ingredientes`),
+  guardarOpcionesDePlato: (token, id, ingredientes) =>
+    pedir(`/platos/${id}/ingredientes`, { metodo: 'PUT', cuerpo: { ingredientes }, token }),
+  listarIngredientes: () => pedir('/ingredientes'),
+  crearIngrediente: (token, datos) => pedir('/ingredientes', { metodo: 'POST', cuerpo: datos, token }),
+  actualizarIngrediente: (token, id, datos) => pedir(`/ingredientes/${id}`, { metodo: 'PUT', cuerpo: datos, token }),
+  eliminarIngrediente: (token, id) => pedir(`/ingredientes/${id}`, { metodo: 'DELETE', token }),
+
   // Autenticación
   registrar: (datos) => pedir('/auth/register', { metodo: 'POST', cuerpo: datos }),
   ingresar: (credenciales) => pedir('/auth/login', { metodo: 'POST', cuerpo: credenciales }),
+  perfil: (token) => pedir('/auth/perfil', { token }),
 
   // Pedidos
   misPedidos: (token) => pedir('/pedidos/usuario', { token }),
@@ -58,4 +69,10 @@ export const api = {
   crearPedido: (token, platos) => pedir('/pedidos', { metodo: 'POST', cuerpo: { platos }, token }),
   cambiarEstado: (token, id, accion) => pedir(`/pedidos/${id}/${accion}`, { metodo: 'PUT', token }),
   eliminarPedido: (token, id) => pedir(`/pedidos/${id}`, { metodo: 'DELETE', token }),
+
+  // Usuarios (administración)
+  listarUsuarios: (token) => pedir('/usuarios', { token }),
+  cambiarRol: (token, id, admin) => pedir(`/usuarios/${id}/admin`, { metodo: 'PUT', cuerpo: { admin }, token }),
+  actualizarUsuario: (token, id, datos) => pedir(`/usuarios/${id}`, { metodo: 'PUT', cuerpo: datos, token }),
+  eliminarUsuario: (token, id) => pedir(`/usuarios/${id}`, { metodo: 'DELETE', token }),
 };

@@ -49,10 +49,10 @@ async function eliminarPlato(id) {
   return rowCount > 0;
 }
 
-/** De una lista de ids, devuelve los que existen en Platos. Acepta un cliente de transacción. */
-async function buscarIdsExistentes(ids, db = pool) {
-  const { rows } = await db.query('SELECT id FROM Platos WHERE id = ANY($1::int[])', [ids]);
-  return rows.map((fila) => fila.id);
+/** De una lista de ids, devuelve los platos que existen. Acepta un cliente de transacción. */
+async function buscarPlatosPorIds(ids, db = pool) {
+  const { rows } = await db.query(`SELECT ${COLUMNAS} FROM Platos WHERE id = ANY($1::int[])`, [ids]);
+  return rows;
 }
 
 module.exports = {
@@ -62,5 +62,5 @@ module.exports = {
   crearPlato,
   actualizarPlato,
   eliminarPlato,
-  buscarIdsExistentes,
+  buscarPlatosPorIds,
 };

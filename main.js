@@ -1,5 +1,5 @@
 /**
- * main.js — Servidor de CUFAMBRE.
+ * main.js — Servidor de King Sciarra.
  *
  * Crea la aplicación Express, sirve el frontend, monta la API y centraliza el
  * manejo de errores. Al iniciar verifica la conexión a PostgreSQL y ejecuta
@@ -71,12 +71,12 @@ async function iniciarServidor() {
 
   const puerto = Number(process.env.PORT) || 3000;
   await escuchar(puerto);
-  console.log(`🍔 CUFAMBRE escuchando en http://localhost:${puerto}`);
+  console.log(`🍔 King Sciarra escuchando en http://localhost:${puerto}`);
 }
 
 if (require.main === module) {
   iniciarServidor().catch((error) => {
-    console.error(`✖ No se pudo iniciar CUFAMBRE: ${error.message}`);
+    console.error(`✖ No se pudo iniciar King Sciarra: ${error.message}`);
     process.exit(1);
   });
 }

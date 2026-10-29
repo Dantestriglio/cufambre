@@ -2,7 +2,7 @@
  * services/platosService.js — Lógica de negocio del catálogo de platos.
  */
 const { platosController } = require('../controllers/controllers');
-const { HttpError, CODIGOS_PG } = require('../utils/httpError');
+const { HttpError, esErrorDeClaveForanea } = require('../utils/httpError');
 const {
   esObjetoPlano,
   esEnteroEnRango,
@@ -11,7 +11,7 @@ const {
   lanzarSiHayErrores,
 } = require('../utils/validaciones');
 
-const TIPOS_VALIDOS = ['principal', 'combo', 'postre'];
+const TIPOS_VALIDOS = ['principal', 'combo', 'postre', 'bebida'];
 
 function normalizarTipo(tipo) {
   return typeof tipo === 'string' ? tipo.trim().toLowerCase() : tipo;
@@ -82,7 +82,7 @@ async function eliminarPlato(idParametro) {
     eliminado = await platosController.eliminarPlato(id);
   } catch (error) {
     // La clave foránea de PlatosXPedidos impide borrar un plato que ya se pidió
-    if (error.code === CODIGOS_PG.VIOLACION_CLAVE_FORANEA) {
+    if (esErrorDeClaveForanea(error)) {
       throw new HttpError(409, 'No se puede eliminar el plato porque forma parte de uno o más pedidos');
     }
     throw error;

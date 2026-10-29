@@ -1,7 +1,7 @@
 // Sesión del usuario: guarda el JWT y lo da por terminado cuando vence (30 minutos).
 // El rol que se usa acá solo decide qué se muestra: la API vuelve a verificar todo.
 
-const CLAVE = 'cufambre.sesion';
+const CLAVE = 'kingsciarra.sesion';
 let sesion = null;
 let temporizador = null;
 const oyentes = new Set();
@@ -17,8 +17,16 @@ function vencimientoDe(token) {
   }
 }
 
-function avisarCambio(motivo) {
-  for (const oyente of oyentes) oyente(sesion, motivo);
+function avisarCambio(motivo, anterior = null) {
+  for (const oyente of oyentes) oyente(sesion, motivo, anterior);
+}
+
+function guardar() {
+  try {
+    localStorage.setItem(CLAVE, JSON.stringify(sesion));
+  } catch {
+    // Sin almacenamiento disponible la sesión dura hasta recargar la página
+  }
 }
 
 function programarVencimiento() {
@@ -45,13 +53,18 @@ export function esAdmin() {
 
 export function iniciarSesion({ token, usuario }) {
   sesion = { token, usuario };
-  try {
-    localStorage.setItem(CLAVE, JSON.stringify(sesion));
-  } catch {
-    // Sin almacenamiento disponible la sesión dura hasta recargar la página
-  }
+  guardar();
   programarVencimiento();
   avisarCambio('inicio');
+}
+
+/** Reemplaza los datos del usuario (nombre, rol...) sin cerrar la sesión. Avisa solo si cambiaron. */
+export function actualizarUsuario(usuario) {
+  if (!sesion || JSON.stringify(sesion.usuario) === JSON.stringify(usuario)) return;
+  const anterior = sesion;
+  sesion = { ...sesion, usuario };
+  guardar();
+  avisarCambio('actualizacion', anterior);
 }
 
 export function cerrarSesion(motivo = 'salida') {

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300" role="img" aria-label="Nueva bebida">
+<title>Nueva bebida</title>
+<ellipse cx="200" cy="272" rx="92" ry="11" fill="#292016" opacity=".14"/>
+<path d="M214 150 L236 46 H258" stroke="#292016" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+<path d="M214 150 L236 46 H258" stroke="#FFC83D" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+<path d="M138 98 H262 L248 262 Q247 268 240 268 H160 Q153 268 152 262 Z" fill="#FFFDF6" stroke="#292016" stroke-width="4" stroke-linejoin="round"/>
+<path d="M143 126 Q170 118 200 126 Q230 134 257 126 L246 258 Q245 262 240 262 H160 Q155 262 154 258 Z" fill="#FF9C8A"/>
+<circle cx="176" cy="238" r="4" fill="none" stroke="#FFD3C6" stroke-width="2.5"/>
+<circle cx="214" cy="222" r="3" fill="none" stroke="#FFD3C6" stroke-width="2.5"/>
+<circle cx="228" cy="246" r="3.5" fill="none" stroke="#FFD3C6" stroke-width="2.5"/>
+<circle cx="188" cy="198" r="3" fill="none" stroke="#FFD3C6" stroke-width="2.5"/>
+<circle cx="236" cy="186" r="2.5" fill="none" stroke="#FFD3C6" stroke-width="2.5"/>
+<rect x="162" y="128" width="34" height="32" rx="7" transform="rotate(-12 179 144)" fill="#FFFFFF" fill-opacity=".72" stroke="#292016" stroke-width="3"/>
+<rect x="204" y="136" width="32" height="30" rx="7" transform="rotate(14 220 151)" fill="#FFFFFF" fill-opacity=".72" stroke="#292016" stroke-width="3"/>
+<path d="M150 112 L160 250" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" opacity=".85"/>
+<path d="M138 98 H262" stroke="#292016" stroke-width="4" stroke-linecap="round"/>
+</svg>

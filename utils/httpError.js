@@ -14,6 +14,13 @@ class HttpError extends Error {
 const CODIGOS_PG = {
   VIOLACION_UNICA: '23505',
   VIOLACION_CLAVE_FORANEA: '23503',
+  // PostgreSQL 18 informa con este código el borrado frenado por ON DELETE RESTRICT
+  VIOLACION_RESTRICT: '23001',
 };
 
-module.exports = { HttpError, CODIGOS_PG };
+/** true si el error es un borrado o inserción frenado por una clave foránea. */
+function esErrorDeClaveForanea(error) {
+  return error.code === CODIGOS_PG.VIOLACION_CLAVE_FORANEA || error.code === CODIGOS_PG.VIOLACION_RESTRICT;
+}
+
+module.exports = { HttpError, CODIGOS_PG, esErrorDeClaveForanea };

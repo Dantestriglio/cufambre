@@ -121,7 +121,7 @@ function configurarSsl(host, sslmode = 'verify-full', sslrootcert) {
   }
   if (!MODOS_SSL_CON_VERIFICACION.has(modo)) {
     throw new ErrorDeConfiguracion(
-      `sslmode=${sslmode} no está permitido: CUFAMBRE siempre verifica el certificado del servidor. ` +
+      `sslmode=${sslmode} no está permitido: King Sciarra siempre verifica el certificado del servidor. ` +
         'Usá sslmode=require (o verify-full).'
     );
   }

@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300" role="img" aria-label="Clásica CUFAMBRE">
-<title>Clásica CUFAMBRE</title>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300" role="img" aria-label="Clásica King">
+<title>Clásica King</title>
 <ellipse cx="200" cy="274" rx="160" ry="11" fill="#292016" opacity=".14"/><g transform="translate(200 268) scale(1) translate(-200 0)">
       <path d="M78 -28 Q78 -34 90 -34 H310 Q322 -34 322 -28 L316 -10 Q312 0 294 0 H106 Q88 0 84 -10 Z" fill="#F4B942" stroke="#292016" stroke-width="4" stroke-linejoin="round"/>
       <path d="M84 -30 H316 L315 -23 H85 Z" fill="#FCE6AE"/>

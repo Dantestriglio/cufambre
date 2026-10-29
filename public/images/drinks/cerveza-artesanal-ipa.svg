@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300" role="img" aria-label="Cerveza Artesanal IPA">
+<title>Cerveza Artesanal IPA</title>
+<ellipse cx="200" cy="272" rx="84" ry="11" fill="#292016" opacity=".14"/>
+<path d="M144 84 H256 L246 262 Q245 268 238 268 H162 Q155 268 154 262 Z" fill="#F2A541" stroke="#292016" stroke-width="4" stroke-linejoin="round"/>
+<path d="M147 120 H253" stroke="#E8952F" stroke-width="4"/>
+<path d="M136 92 Q132 62 160 64 Q170 44 196 54 Q216 40 236 58 Q266 56 264 90 Q262 108 246 106 Q240 120 222 112 Q206 124 190 112 Q172 122 160 108 Q138 112 136 92 Z" fill="#FFFDF8" stroke="#292016" stroke-width="4" stroke-linejoin="round"/>
+<circle cx="180" cy="200" r="4" fill="none" stroke="#FFD27A" stroke-width="2.5"/>
+<circle cx="214" cy="170" r="3" fill="none" stroke="#FFD27A" stroke-width="2.5"/>
+<circle cx="226" cy="230" r="3.5" fill="none" stroke="#FFD27A" stroke-width="2.5"/>
+<circle cx="196" cy="244" r="3" fill="none" stroke="#FFD27A" stroke-width="2.5"/>
+<path d="M158 130 L166 250" stroke="#FFE2A8" stroke-width="6" stroke-linecap="round" opacity=".9"/>
+</svg>

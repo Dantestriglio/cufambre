@@ -22,11 +22,8 @@ function normalizarEmail(email) {
   return typeof email === 'string' ? email.trim().toLowerCase() : email;
 }
 
-function validarRegistro(body) {
-  if (!esObjetoPlano(body)) {
-    throw new HttpError(400, 'El cuerpo debe ser un objeto JSON con nombre, apellido, email y password');
-  }
-  const errores = [];
+/** Valida nombre, apellido y email (registro y edición desde el panel de administración). */
+function validarDatosPersonales(body, errores) {
   const nombre = validarTexto(body.nombre, 'nombre', 50, errores);
   const apellido = validarTexto(body.apellido, 'apellido', 50, errores);
 
@@ -36,6 +33,15 @@ function validarRegistro(body) {
   } else if (email.length > 256) {
     errores.push('email no puede superar los 256 caracteres');
   }
+  return { nombre, apellido, email };
+}
+
+function validarRegistro(body) {
+  if (!esObjetoPlano(body)) {
+    throw new HttpError(400, 'El cuerpo debe ser un objeto JSON con nombre, apellido, email y password');
+  }
+  const errores = [];
+  const { nombre, apellido, email } = validarDatosPersonales(body, errores);
 
   const { password } = body;
   if (typeof password !== 'string' || password.length < LARGO_MINIMO_PASSWORD) {
@@ -101,4 +107,4 @@ async function iniciarSesion(body) {
   return { token: generarToken(usuario.id), usuario: usuarioPublico };
 }
 
-module.exports = { registrarUsuario, iniciarSesion, generarToken, normalizarEmail };
+module.exports = { registrarUsuario, iniciarSesion, generarToken, normalizarEmail, validarDatosPersonales };

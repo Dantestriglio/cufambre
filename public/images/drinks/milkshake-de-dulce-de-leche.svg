@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300" role="img" aria-label="Milkshake de Dulce de Leche">
+<title>Milkshake de Dulce de Leche</title>
+<ellipse cx="200" cy="272" rx="80" ry="11" fill="#292016" opacity=".14"/>
+<path d="M218 120 L244 30 H264" stroke="#292016" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+<path d="M218 120 L244 30 H264" stroke="#FFFDF8" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+<path d="M226 92 L230 78 M234 64 L238 50" stroke="#D92D20" stroke-width="7"/>
+<path d="M146 112 H254 L240 262 Q239 268 232 268 H168 Q161 268 160 262 Z" fill="#D9A066" stroke="#292016" stroke-width="4" stroke-linejoin="round"/>
+<path d="M152 160 Q176 150 200 160 Q224 170 249 160" stroke="#B9783F" stroke-width="5" fill="none" stroke-linecap="round"/>
+<path d="M140 116 Q136 92 160 94 Q160 68 188 76 Q196 52 220 66 Q246 62 246 90 Q266 96 258 116 Z" fill="#FFFDF8" stroke="#292016" stroke-width="4" stroke-linejoin="round"/>
+<path d="M168 94 Q184 86 196 96 M206 78 Q220 74 228 86" stroke="#F4EDE0" stroke-width="4" fill="none" stroke-linecap="round"/>
+<path d="M196 60 Q194 44 206 36" stroke="#292016" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+<circle cx="194" cy="62" r="11" fill="#D92D20" stroke="#292016" stroke-width="3.5"/><circle cx="190" cy="58" r="3" fill="#FFB3A8"/>
+<path d="M162 130 L172 250" stroke="#EBC08F" stroke-width="6" stroke-linecap="round" opacity=".9"/>
+</svg>

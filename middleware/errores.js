@@ -8,6 +8,7 @@ const { HttpError } = require('../utils/httpError');
 const ERRORES_POSTGRES = {
   '23505': [409, 'El dato ya existe y debe ser único'],
   '23503': [409, 'La operación entra en conflicto con datos relacionados'],
+  '23001': [409, 'La operación entra en conflicto con datos relacionados'],
   '23502': [400, 'Falta un dato obligatorio'],
   '23514': [400, 'Algún dato no cumple las restricciones de la base de datos'],
   '22P02': [400, 'Algún dato tiene un formato inválido'],

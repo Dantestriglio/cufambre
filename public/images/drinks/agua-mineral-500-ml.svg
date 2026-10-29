@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300" role="img" aria-label="Agua Mineral 500 ml">
+<title>Agua Mineral 500 ml</title>
+<ellipse cx="200" cy="272" rx="70" ry="10" fill="#292016" opacity=".14"/>
+<rect x="182" y="30" width="36" height="22" rx="5" fill="#2F7FC1" stroke="#292016" stroke-width="4"/>
+<path d="M186 52 H214 V78 Q246 96 246 132 V252 Q246 268 230 268 H170 Q154 268 154 252 V132 Q154 96 186 78 Z" fill="#D6F0FA" stroke="#292016" stroke-width="4" stroke-linejoin="round"/>
+<path d="M157 150 Q200 140 243 150 V250 Q243 264 230 264 H170 Q157 264 157 250 Z" fill="#9FD8EF"/>
+<rect x="154" y="160" width="92" height="52" fill="#FFFDF8" stroke="#292016" stroke-width="4"/>
+<path d="M168 186 Q184 172 200 186 T232 186" stroke="#2F7FC1" stroke-width="5" fill="none" stroke-linecap="round"/>
+<path d="M168 112 Q166 140 168 150 M168 222 L168 250" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" opacity=".9"/>
+</svg>

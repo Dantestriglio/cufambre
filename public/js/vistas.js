@@ -19,6 +19,19 @@ export function etiquetaEstado(estado) {
   return ESTADOS.find((item) => item.clave === estado)?.etiqueta ?? estado;
 }
 
+/**
+ * Resumen de la personalización de un ítem: "+2 Cheddar · sin Cebolla · “bien cocida”".
+ * Recibe { extras: [{ nombre, cantidad }], sin: [nombre o { nombre }], aclaracion }.
+ */
+export function detallePersonalizacion({ extras = [], sin = [], aclaracion = null }) {
+  const partes = [
+    ...extras.map((extra) => `<span class="detalle__extra">+${extra.cantidad > 1 ? `${Number(extra.cantidad)} ` : ''}${esc(extra.nombre)}</span>`),
+    ...sin.map((quitado) => `<span class="detalle__sin">sin ${esc(quitado.nombre ?? quitado)}</span>`),
+  ];
+  if (aclaracion) partes.push(`<span class="detalle__nota">“${esc(aclaracion)}”</span>`);
+  return partes.length ? `<p class="detalle">${partes.join(' ')}</p>` : '';
+}
+
 export function tarjetaPedido(pedido, { admin = false } = {}) {
   const id = Number(pedido.id);
   const indice = ESTADOS.findIndex((item) => item.clave === pedido.estado);
@@ -30,7 +43,7 @@ export function tarjetaPedido(pedido, { admin = false } = {}) {
   const items = pedido.platos
     .map(
       (plato) =>
-        `<li><span>${Number(plato.cantidad)} × ${esc(plato.nombre)}</span><span>${formatearPrecio(plato.precio * plato.cantidad)}</span></li>`
+        `<li><div><span>${Number(plato.cantidad)} × ${esc(plato.nombre)}</span>${detallePersonalizacion(plato)}</div><span>${formatearPrecio(plato.precio * plato.cantidad)}</span></li>`
     )
     .join('');
 

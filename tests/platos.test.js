@@ -63,7 +63,7 @@ describe('API de platos', () => {
 
   test('GET /platos/tipo/:tipo filtra por tipo', async () => {
     const postre = await crearPlatoDePrueba({ tipo: 'postre', nombre: 'Flan' });
-    for (const tipo of ['principal', 'combo', 'postre']) {
+    for (const tipo of ['principal', 'combo', 'postre', 'bebida']) {
       const respuesta = await api('GET', `/platos/tipo/${tipo}`);
       assert.equal(respuesta.status, 200);
       assert.ok(Array.isArray(respuesta.body));
@@ -74,9 +74,9 @@ describe('API de platos', () => {
   });
 
   test('GET /platos/tipo/:tipo con un tipo inválido devuelve 400', async () => {
-    const respuesta = await api('GET', '/platos/tipo/bebida');
+    const respuesta = await api('GET', '/platos/tipo/ensalada');
     assert.equal(respuesta.status, 400);
-    assert.match(respuesta.body.message, /principal, combo, postre/);
+    assert.match(respuesta.body.message, /principal, combo, postre, bebida/);
   });
 
   test('sin token no se puede crear, modificar ni eliminar platos (401)', async () => {
@@ -138,7 +138,7 @@ describe('API de platos', () => {
     const casos = [
       {},
       sinDescripcion,
-      { ...PLATO_VALIDO, tipo: 'bebida' },
+      { ...PLATO_VALIDO, tipo: 'ensalada' },
       { ...PLATO_VALIDO, precio: -10 },
       { ...PLATO_VALIDO, precio: 10.5 },
       { ...PLATO_VALIDO, precio: '300' },

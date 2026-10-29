@@ -1,8 +1,8 @@
-# 🍔 CUFAMBRE
+# 👑🍔 King Sciarra
 
-**CUFAMBRE** es una hamburguesería ficticia con identidad visual propia. Este proyecto contiene su **API REST**, que cumple los requisitos de la consigna **BurgerTIC – backend general** (platos, usuarios/autenticación y pedidos), y un **frontend** que la consume: menú con imágenes propias de cada producto, carrito, registro e ingreso, seguimiento de pedidos y panel de administración.
+**King Sciarra** es una hamburguesería ficticia con identidad visual propia. Este proyecto contiene su **API REST**, construida sobre los requisitos de la consigna **BurgerTIC – backend general** (platos, usuarios/autenticación y pedidos), y un **frontend** que la consume: menú con imágenes propias de cada producto, **platos que se arman a gusto** (quitar ingredientes, sumar extras y dejar aclaraciones, con el precio recalculado), **bebidas**, carrito, registro e ingreso, seguimiento de pedidos y un **panel de administración** con resumen, pedidos, platos, ingredientes y usuarios.
 
-> BurgerTIC es el nombre de la consigna; la marca de la aplicación es CUFAMBRE.
+> BurgerTIC es el nombre de la consigna; la marca de la aplicación es King Sciarra (antes se llamaba CUFAMBRE). Las ampliaciones respecto de la consigna original están marcadas en cada sección.
 
 ---
 
@@ -14,14 +14,15 @@
 4. [Configurar Neon y el archivo .env](#configurar-neon-y-el-archivo-env)
 5. [Base de datos: tablas, relaciones y restricciones](#base-de-datos-tablas-relaciones-y-restricciones)
 6. [Usuarios, login y JWT](#usuarios-login-y-jwt)
-7. [Crear un administrador](#crear-un-administrador)
-8. [Referencia de la API](#referencia-de-la-api)
-9. [Códigos de estado y errores](#códigos-de-estado-y-errores)
-10. [Probar los pedidos y sus estados paso a paso](#probar-los-pedidos-y-sus-estados-paso-a-paso)
-11. [Frontend](#frontend)
-12. [Pruebas automáticas](#pruebas-automáticas)
-13. [Decisiones técnicas](#decisiones-técnicas)
-14. [Solución de problemas](#solución-de-problemas)
+7. [Administradores](#administradores)
+8. [Personalización de platos](#personalización-de-platos)
+9. [Referencia de la API](#referencia-de-la-api)
+10. [Códigos de estado y errores](#códigos-de-estado-y-errores)
+11. [Probar los pedidos y sus estados paso a paso](#probar-los-pedidos-y-sus-estados-paso-a-paso)
+12. [Frontend](#frontend)
+13. [Pruebas automáticas](#pruebas-automáticas)
+14. [Decisiones técnicas](#decisiones-técnicas)
+15. [Solución de problemas](#solución-de-problemas)
 
 ---
 
@@ -49,36 +50,50 @@ cufambre/
 │                            centraliza los errores, verifica la base y ejecuta schema.sql al iniciar
 ├── dbconfig.js              Conexión a Neon: lee .env, configura SSL y exporta el Pool de pg
 ├── routes/                  RUTAS (express.Router): conectan HTTP con los servicios
-│   ├── routes.js            Router principal: monta /platos, /auth y /pedidos
-│   ├── platosRouter.js
+│   ├── routes.js            Router principal: monta /platos, /auth, /pedidos, /ingredientes y /usuarios
+│   ├── platosRouter.js      (incluye /platos/opciones y /platos/:id/ingredientes)
 │   ├── authRouter.js
-│   └── pedidosRouter.js
-├── services/                LÓGICA DE NEGOCIO: validaciones, reglas, JWT, transacciones
+│   ├── pedidosRouter.js
+│   ├── ingredientesRouter.js
+│   └── usuariosRouter.js    (solo administradores)
+├── services/                LÓGICA DE NEGOCIO: validaciones, reglas, precios, JWT, transacciones
 │   ├── services.js          Punto de entrada de la capa
 │   ├── platosService.js
 │   ├── authService.js
-│   └── pedidosService.js
+│   ├── pedidosService.js    (valida la personalización y calcula el precio de cada ítem)
+│   ├── ingredientesService.js
+│   └── usuariosService.js
 ├── controllers/             ACCESO A DATOS: consultas SQL con pg
 │   ├── controllers.js       Punto de entrada de la capa
 │   ├── platosController.js
-│   ├── authController.js    (tabla Usuarios)
-│   └── pedidosController.js (tablas Pedidos y PlatosXPedidos)
+│   ├── authController.js    (tabla Usuarios: login y registro)
+│   ├── pedidosController.js (tablas Pedidos, PlatosXPedidos y Personalizaciones)
+│   ├── ingredientesController.js (tablas Ingredientes e IngredientesXPlatos)
+│   └── usuariosController.js     (tabla Usuarios: administración)
 ├── middleware/
 │   ├── auth.js              verificarToken (JWT) y verificarAdmin (rol leído de la base)
 │   └── errores.js           404 y manejo centralizado de errores en JSON
 ├── utils/                   HttpError, validaciones y configuración común del JWT
 ├── database/
-│   ├── schema.sql           Las 4 tablas con claves primarias, foráneas y restricciones
+│   ├── schema.sql           Las 7 tablas con claves primarias, foráneas y restricciones,
+│   │                        y las migraciones desde la versión anterior
 │   ├── init.js              Ejecuta schema.sql en una transacción (npm run db:init)
-│   └── seed.js              Carga el menú de ejemplo si Platos está vacía (npm run db:seed)
+│   ├── seed.js              Agrega lo que falte del menú de ejemplo (npm run db:seed)
+│   ├── admin.js             Da el rol de administrador a un usuario (npm run admin -- email)
+│   ├── neon_setup.sql       Todo lo anterior en un solo script para el SQL Editor de Neon
+│   ├── datos_demo.sql       Usuarios y pedidos de demostración
+│   └── demo.js              Carga datos_demo.sql (npm run db:demo)
 ├── public/                  Frontend
 │   ├── index.html
 │   ├── css/styles.css
-│   ├── js/                  app.js, api.js, sesion.js, carrito.js, admin.js, vistas.js, imagenes.js, utilidades.js
+│   ├── js/                  app.js, api.js, sesion.js, carrito.js, opciones.js, personalizar.js,
+│   │                        admin.js, adminIngredientes.js, adminUsuarios.js, adminResumen.js,
+│   │                        vistas.js, imagenes.js, utilidades.js
 │   └── images/
 │       ├── burgers/         una ilustración distinta por hamburguesa
 │       ├── combos/
-│       └── desserts/
+│       ├── desserts/
+│       └── drinks/
 ├── tests/                   Pruebas automáticas de la API
 ├── .env                     Variables locales (NO se sube al repositorio)
 ├── .env.example             Modelo de .env sin credenciales reales
@@ -87,7 +102,7 @@ cufambre/
 └── README.md
 ```
 
-Las capas se reparten como pide el proyecto: **routes** define los endpoints, **services** implementa la lógica y **controllers** accede a PostgreSQL. Cada capa está dividida por dominio (platos, auth y pedidos) y tiene su archivo principal (`routes.js`, `services.js`, `controllers.js`).
+Las capas se reparten como pide el proyecto: **routes** define los endpoints, **services** implementa la lógica y **controllers** accede a PostgreSQL. Cada capa está dividida por dominio (platos, auth, pedidos, ingredientes y usuarios) y tiene su archivo principal (`routes.js`, `services.js`, `controllers.js`).
 
 ---
 
@@ -96,8 +111,12 @@ Las capas se reparten como pide el proyecto: **routes** define los endpoints, **
 ```bash
 npm install                 # 1. dependencias
 cp .env.example .env        # 2. (o editá el .env existente) y completá los datos de Neon
-npm run db:seed             # 3. crea las tablas (si no existen) y carga el menú de ejemplo
+npm run db:seed             # 3. crea o actualiza las tablas y carga el menú de ejemplo
 npm start                   # 4. http://localhost:3000
+# 5. Registrate desde la página y convertite en el primer administrador:
+npm run admin -- tu-email@ejemplo.com
+# (opcional) usuarios y pedidos de demostración para probar el panel:
+npm run db:demo
 ```
 
 Para desarrollo, `npm run dev` reinicia el servidor al guardar cambios.
@@ -163,28 +182,40 @@ Las tablas se definen con SQL en [`database/schema.sql`](database/schema.sql) (n
 | **Platos** | `id` INTEGER identidad (PK) · `tipo` VARCHAR(20) · `nombre` VARCHAR(70) · `precio` INTEGER · `descripcion` VARCHAR(400) |
 | **Usuarios** | `id` INTEGER identidad (PK) · `nombre` VARCHAR(50) · `apellido` VARCHAR(50) · `email` VARCHAR(256) único · `password` VARCHAR(256) (hash bcrypt) · `admin` BOOLEAN por defecto `false` |
 | **Pedidos** | `id` INTEGER identidad (PK) · `id_usuario` INTEGER (FK → Usuarios.id) · `fecha` DATE · `estado` VARCHAR(50) |
-| **PlatosXPedidos** | `id` INTEGER identidad (PK) · `id_pedido` INTEGER (FK → Pedidos.id) · `id_plato` INTEGER (FK → Platos.id) · `cantidad` INTEGER |
+| **PlatosXPedidos** | `id` INTEGER identidad (PK) · `id_pedido` INTEGER (FK → Pedidos.id) · `id_plato` INTEGER (FK → Platos.id) · `cantidad` INTEGER · *ampliación:* `precio_unitario` INTEGER · `aclaracion` VARCHAR(140) |
+| **Ingredientes** *(ampliación)* | `id` INTEGER identidad (PK) · `nombre` VARCHAR(60) único sin distinguir mayúsculas · `precio` INTEGER (costo de cada unidad extra) · `disponible` BOOLEAN |
+| **IngredientesXPlatos** *(ampliación)* | `id` (PK) · `id_plato` (FK → Platos.id) · `id_ingrediente` (FK → Ingredientes.id) · `incluido` BOOLEAN (viene en el plato y se puede quitar) · `maximo` INTEGER (unidades extra permitidas, 0 a 10) |
+| **Personalizaciones** *(ampliación)* | `id` (PK) · `id_item` (FK → PlatosXPedidos.id) · `id_ingrediente` (FK → Ingredientes.id) · `accion` (`agregar` o `quitar`) · `cantidad` · `precio` (valor del extra al momento del pedido) |
 
 Los identificadores usan `GENERATED BY DEFAULT AS IDENTITY`.
 
 ### Asociaciones (claves foráneas)
 
 ```
-Usuarios 1 ──────< N Pedidos 1 ──────< N PlatosXPedidos N >────── 1 Platos
-   id               id_usuario            id_pedido · id_plato · cantidad
+Usuarios 1 ──< N Pedidos 1 ──< N PlatosXPedidos N >── 1 Platos 1 ──< N IngredientesXPlatos N >── 1 Ingredientes
+                                       1                                                              1
+                                       └──────────< N Personalizaciones N >───────────────────────────┘
 ```
 
 - **Un usuario tiene muchos pedidos**: `Pedidos.id_usuario → Usuarios.id` (`ON DELETE RESTRICT`).
-- **Un pedido tiene muchos platos y un plato aparece en muchos pedidos**, mediante la tabla intermedia **PlatosXPedidos**, que además guarda la **cantidad**:
+- **Un pedido tiene muchos platos y un plato aparece en muchos pedidos**, mediante la tabla intermedia **PlatosXPedidos**. Cada fila es un **ítem** con su cantidad: el mismo plato puede aparecer dos veces si se personalizó distinto.
   - `PlatosXPedidos.id_pedido → Pedidos.id` (`ON DELETE CASCADE`: al borrar un pedido no quedan filas huérfanas).
   - `PlatosXPedidos.id_plato → Platos.id` (`ON DELETE RESTRICT`: un plato que ya se pidió no se puede borrar; la API responde 409).
+- **Cada plato admite muchos ingredientes y un ingrediente sirve para muchos platos**, mediante **IngredientesXPlatos** (`ON DELETE CASCADE` en ambas FK: es configuración, no historia).
+- **Cada ítem de un pedido guarda sus cambios** en **Personalizaciones**: `id_item → PlatosXPedidos.id` (`CASCADE`) e `id_ingrediente → Ingredientes.id` (`RESTRICT`: un ingrediente que ya se pidió no se borra; se puede marcar como agotado).
 
 ### Restricciones
 
-- `Platos.tipo` ∈ {`principal`, `combo`, `postre`} · `precio >= 0` · nombre y descripción no vacíos.
+- `Platos.tipo` ∈ {`principal`, `combo`, `postre`, `bebida`} · `precio >= 0` · nombre y descripción no vacíos.
 - `Usuarios.email` único · `admin` por defecto `false`.
 - `Pedidos.estado` ∈ {`pendiente`, `aceptado`, `en camino`, `entregado`}, por defecto `pendiente` · `fecha` por defecto la fecha actual.
-- `PlatosXPedidos.cantidad > 0` · un mismo plato figura una sola vez por pedido (`UNIQUE (id_pedido, id_plato)`).
+- `PlatosXPedidos.cantidad > 0` · `precio_unitario >= 0`.
+- `Ingredientes.precio >= 0` · `IngredientesXPlatos`: un ingrediente una sola vez por plato, `maximo` entre 0 y 10, y si no viene incluido tiene que poder agregarse (`maximo > 0`).
+- `Personalizaciones.accion` ∈ {`agregar`, `quitar`} · `cantidad > 0` · un ingrediente una sola vez por ítem.
+
+### Migración desde la versión anterior
+
+`schema.sql` también actualiza una base creada con la versión anterior (CUFAMBRE) sin perder datos: agrega el tipo `bebida`, las columnas `precio_unitario` y `aclaracion`, quita la restricción que impedía repetir un plato en un pedido y crea las tablas nuevas. Los ítems viejos no tienen `precio_unitario` y se muestran con el precio actual del plato. Basta con iniciar el servidor (o `npm run db:init`) y después `npm run db:seed` para sumar el menú nuevo.
 
 ### Cómo crear las tablas en una base nueva
 
@@ -198,6 +229,9 @@ Cualquiera de estas opciones (todas son idempotentes y no borran datos):
     ✔ usuarios
     ✔ pedidos
     ✔ platosxpedidos
+    ✔ ingredientes
+    ✔ ingredientesxplatos
+    ✔ personalizaciones
   ```
 - **psql**: `psql "$DATABASE_URL" --single-transaction -f database/schema.sql`
 - **Neon SQL Editor**: pegá el contenido de `schema.sql` y ejecutalo.
@@ -207,14 +241,31 @@ Cualquiera de estas opciones (todas son idempotentes y no borran datos):
 ```sql
 SELECT table_name FROM information_schema.tables
  WHERE table_schema = 'public'
-   AND table_name IN ('platos', 'usuarios', 'pedidos', 'platosxpedidos');
+   AND table_name IN ('platos', 'usuarios', 'pedidos', 'platosxpedidos',
+                      'ingredientes', 'ingredientesxplatos', 'personalizaciones');
 ```
 
-> PostgreSQL guarda en minúsculas los nombres escritos sin comillas: en Neon vas a ver `platos`, `usuarios`, `pedidos` y `platosxpedidos`. Las consultas se pueden escribir igual con la grafía de la consigna (`SELECT * FROM Platos;`).
+> PostgreSQL guarda en minúsculas los nombres escritos sin comillas: en Neon vas a ver `platos`, `usuarios`, `pedidos`, `platosxpedidos`, etc. Las consultas se pueden escribir igual con la grafía de la consigna (`SELECT * FROM Platos;`).
 
 ### Datos de ejemplo
 
-`npm run db:seed` crea las tablas si faltan y, **solo si Platos está vacía**, carga 16 platos: 8 hamburguesas (`principal`), 4 combos (`combo`) y 4 postres (`postre`). No borra ni duplica nada.
+`npm run db:seed` crea las tablas si faltan y **agrega solo lo que falte**, así que se puede correr sobre una base con datos:
+
+- **25 platos**: 10 hamburguesas (`principal`, entre ellas la nueva **La King Sciarra** y **Pulled Pork BBQ**), 5 combos (con el nuevo **Combo King**), 4 postres y **6 bebidas** (gaseosas, limonada, agua, cerveza IPA y milkshake). Se comparan por nombre, sin distinguir mayúsculas.
+- **44 ingredientes y extras** con su precio (medallón extra, cheddar, panceta, palta, salsas, pan sin TACC, agrandar papas, tamaño grande de bebida, bocha de helado…).
+- **Qué trae y qué admite cada plato**: solo en los platos que todavía no tienen ninguna opción configurada, para no pisar lo que haya cambiado un administrador.
+- Renombra el plato de la versión anterior "Clásica CUFAMBRE" a **"Clásica King"**.
+
+### Datos de demostración (usuarios y pedidos)
+
+Para probar la app y el panel con datos, [`database/datos_demo.sql`](database/datos_demo.sql) carga:
+
+- **13 usuarios** `@demo.kingsciarra.com`, todos con la contraseña **`clave123`**: una administradora (`martina.sciarra@demo.kingsciarra.com`) y 12 clientes.
+- **49 pedidos de las últimas 3 semanas**: los anteriores entregados y los de hoy en todos los estados, con hamburguesas personalizadas (extras, ingredientes quitados, aclaraciones), combos, bebidas y postres. Las fechas son relativas al día en que se ejecuta y los precios se calculan como en la API.
+
+Se carga con `npm run db:demo` (asegura antes las tablas y el menú) o pegando el archivo en el SQL Editor de Neon **después** de `neon_setup.sql`. Se puede repetir: los usuarios no se duplican y los pedidos solo se cargan si los usuarios de demostración todavía no tienen ninguno. Para sacarlos, eliminá esas cuentas desde **Panel → Usuarios** (se borran con sus pedidos), o en SQL: `DELETE FROM Pedidos WHERE id_usuario IN (SELECT id FROM Usuarios WHERE email LIKE '%@demo.kingsciarra.com');` y después `DELETE FROM Usuarios WHERE email LIKE '%@demo.kingsciarra.com';`.
+
+> ⚠️ Son cuentas con una contraseña conocida (incluida una administradora): usalas para probar, no en una base pública.
 
 ---
 
@@ -272,16 +323,45 @@ En cada solicitud protegida el middleware verifica el formato `Bearer`, la firma
 
 ---
 
-## Crear un administrador
+## Administradores
 
-Como exige la consigna, **no hay ninguna ruta para crear administradores**: el rol solo se asigna modificando la base directamente.
+El registro público **siempre** crea clientes (`admin = false`), como pide la consigna. *Ampliación:* una vez que existe un administrador, **los administradores gestionan a los demás desde el panel** (pestaña **Usuarios**) o con la API `/usuarios`.
+
+### El primer administrador
 
 1. Registrá el usuario normalmente (`POST /auth/register` o desde el frontend, botón **Ingresar → Crear cuenta**).
-2. En el **SQL Editor de Neon** (o con `psql`), ejecutá:
-   ```sql
-   UPDATE Usuarios SET admin = true WHERE email = 'admin@cufambre.com';
+2. Dale el rol con el script (usa la conexión del `.env`):
+   ```bash
+   npm run admin -- admin@kingsciarra.com
    ```
-3. Iniciá sesión de nuevo. El rol se lee de la base en cada solicitud, así que el cambio vale incluso con un token ya emitido.
+   o, si preferís, en el **SQL Editor de Neon**:
+   ```sql
+   UPDATE Usuarios SET admin = true WHERE email = 'admin@kingsciarra.com';
+   ```
+3. El rol se lee de la base en cada solicitud, así que el cambio vale incluso con un token ya emitido. El frontend consulta `GET /auth/perfil` cada 30 segundos y muestra el panel sin tener que volver a ingresar.
+
+### Administración de usuarios (panel → Usuarios)
+
+- Buscar por nombre o email y filtrar por rol; ver cuántos pedidos hizo cada uno.
+- **Hacer admin / Quitar admin** a otros usuarios.
+- **Editar** nombre, apellido y email (el email se normaliza y no puede repetirse).
+- **Eliminar** una cuenta: se borran también sus pedidos, en una transacción.
+- Para no dejar el local sin administradores, **nadie puede quitarse su propio rol ni eliminar su propia cuenta** (`409`). Como solo un administrador puede quitarle el rol a otro, siempre queda al menos uno.
+
+---
+
+## Personalización de platos
+
+*Ampliación de la consigna.* Cada plato puede tener **ingredientes y extras** (tabla IngredientesXPlatos):
+
+- **Incluidos**: vienen en el plato y el cliente los puede **quitar** (por ejemplo "sin pepinos"). Quitar no descuenta.
+- **Extras**: se pueden **agregar** hasta un máximo de unidades, pagando el precio del ingrediente cada vez (por ejemplo "+2 cheddar" a $ 900 c/u). Un ingrediente incluido también puede tener extras (doble cheddar).
+- **Aclaración** libre para la cocina (hasta 140 caracteres): "bien cocida", "cortada al medio"…
+- Las bebidas también se personalizan (tamaño grande, rodaja de limón, sin hielo) y en los combos se puede agrandar las papas o la bebida.
+
+**El precio lo calcula siempre el servidor**: precio del plato + extras, y se guarda en `PlatosXPedidos.precio_unitario` (y el de cada extra en Personalizaciones). Así, si después cambia un precio, los pedidos ya hechos no cambian. El frontend muestra la misma cuenta mientras armás el plato, pero cualquier precio que envíe el cliente se ignora.
+
+Los administradores definen qué admite cada plato desde **Panel → Platos** (al crear o editar un plato, sección "Ingredientes y extras") y mantienen el catálogo en **Panel → Ingredientes**, donde además pueden marcar un ingrediente como **agotado** para dejar de ofrecerlo sin borrarlo.
 
 ---
 
@@ -294,10 +374,13 @@ Todas las respuestas son JSON. Los mensajes de éxito y de error tienen la forma
 | Método | Ruta | Acción | Acceso | Éxito | Errores |
 | --- | --- | --- | --- | --- | --- |
 | GET | `/platos` | Lista todos los platos (array, puede estar vacío) | Público | 200 | — |
-| GET | `/platos/tipo/:tipo` | Platos de un tipo: `principal`, `combo` o `postre` | Público | 200 | 400 tipo inválido |
+| GET | `/platos/tipo/:tipo` | Platos de un tipo: `principal`, `combo`, `postre` o `bebida` | Público | 200 | 400 tipo inválido |
+| GET | `/platos/opciones` | Opciones de todos los platos (sin ingredientes agotados), para armar el menú | Público | 200 | — |
 | GET | `/platos/:id` | Un plato | Público | 200 | 400 id inválido · 404 |
+| GET | `/platos/:id/ingredientes` | Qué trae el plato y qué extras admite (incluye agotados) | Público | 200 | 400 · 404 |
 | POST | `/platos` | Crea un plato | Admin | 201 | 400 · 401 · 403 |
 | PUT | `/platos/:id` | Modifica un plato (se envían los 4 campos) | Admin | 200 | 400 · 401 · 403 · 404 |
+| PUT | `/platos/:id/ingredientes` | Reemplaza los ingredientes del plato | Admin | 200 | 400 · 401 · 403 · 404 |
 | DELETE | `/platos/:id` | Elimina un plato | Admin | 200 `{ message }` | 400 · 401 · 403 · 404 · 409 si está en pedidos |
 
 Cuerpo de POST y PUT (el `id` lo genera la base):
@@ -312,7 +395,33 @@ Respuesta de POST `201`:
 { "id": 19, "tipo": "principal", "nombre": "Hamburguesa", "precio": 300, "descripcion": "Hamburguesa de carne con lechuga, tomate y queso" }
 ```
 
-Validaciones: `tipo` uno de los tres permitidos; `nombre` (máx. 70) y `descripcion` (máx. 400) textos no vacíos; `precio` número **entero** mayor o igual a 0 (no se aceptan negativos, decimales ni textos como `"300"`).
+Validaciones: `tipo` uno de los cuatro permitidos; `nombre` (máx. 70) y `descripcion` (máx. 400) textos no vacíos; `precio` número **entero** mayor o igual a 0 (no se aceptan negativos, decimales ni textos como `"300"`).
+
+Cuerpo de `PUT /platos/:id/ingredientes` (reemplaza la lista completa; `[]` la vacía):
+
+```json
+{ "ingredientes": [ { "id": 5, "incluido": true, "maximo": 3 }, { "id": 9, "incluido": false, "maximo": 2 } ] }
+```
+
+Respuesta (también la de `GET /platos/:id/ingredientes`):
+
+```json
+[
+  { "id": 5, "nombre": "Cheddar", "precio": 900, "disponible": true, "incluido": true, "maximo": 3 },
+  { "id": 9, "nombre": "Panceta crocante", "precio": 1300, "disponible": true, "incluido": false, "maximo": 2 }
+]
+```
+
+`GET /platos/opciones` devuelve lo mismo para todos los platos, con un campo `id_plato` en cada fila.
+
+### Ingredientes *(ampliación)*
+
+| Método | Ruta | Acción | Acceso | Éxito | Errores |
+| --- | --- | --- | --- | --- | --- |
+| GET | `/ingredientes` | Catálogo, con `platos` = en cuántos platos se ofrece | Público | 200 | — |
+| POST | `/ingredientes` | Crea un ingrediente `{ nombre, precio, disponible? }` | Admin | 201 | 400 · 401 · 403 · 409 nombre repetido |
+| PUT | `/ingredientes/:id` | Modifica un ingrediente (por ejemplo `disponible: false` = agotado) | Admin | 200 | 400 · 401 · 403 · 404 · 409 |
+| DELETE | `/ingredientes/:id` | Elimina un ingrediente | Admin | 200 `{ message }` | 400 · 401 · 403 · 404 · 409 si figura en pedidos |
 
 ### Autenticación
 
@@ -320,6 +429,16 @@ Validaciones: `tipo` uno de los tres permitidos; `nombre` (máx. 70) y `descripc
 | --- | --- | --- | --- | --- | --- |
 | POST | `/auth/register` | Registra un usuario | Público | 201 | 400 · 409 |
 | POST | `/auth/login` | Devuelve un JWT de 30 minutos | Público | 200 | 400 · 401 |
+| GET | `/auth/perfil` | Datos actuales del usuario del token (incluido el rol) | Usuario | 200 | 401 |
+
+### Usuarios *(ampliación, solo administradores)*
+
+| Método | Ruta | Acción | Éxito | Errores |
+| --- | --- | --- | --- | --- |
+| GET | `/usuarios` | Todos los usuarios con la cantidad de `pedidos` (nunca la contraseña) | 200 | 401 · 403 |
+| PUT | `/usuarios/:id/admin` | Da o quita el rol: `{ "admin": true }` | 200 | 400 · 401 · 403 · 404 · 409 si es el propio |
+| PUT | `/usuarios/:id` | Corrige `{ nombre, apellido, email }` | 200 | 400 · 401 · 403 · 404 · 409 email repetido |
+| DELETE | `/usuarios/:id` | Elimina la cuenta y sus pedidos: `{ message, pedidos_eliminados }` | 200 | 400 · 401 · 403 · 404 · 409 si es la propia |
 
 ### Pedidos
 
@@ -336,16 +455,22 @@ Validaciones: `tipo` uno de los tres permitidos; `nombre` (máx. 70) y `descripc
 
 Las rutas específicas se declaran antes que las que tienen parámetros (`/platos/tipo/:tipo` antes de `/platos/:id` y `/pedidos/usuario` antes de `/pedidos/:id`).
 
-**Crear un pedido** — el cuerpo contiene **solo** el array `platos`:
+**Crear un pedido** — el cuerpo contiene **solo** el array `platos`. El formato de la consigna sigue funcionando igual; la personalización es opcional:
 
 ```json
-{ "platos": [ { "id": 1, "cantidad": 2 }, { "id": 2, "cantidad": 1 } ] }
+{
+  "platos": [
+    { "id": 1, "cantidad": 2, "extras": [ { "id": 5, "cantidad": 2 } ], "sin": [ 14 ], "aclaracion": "bien cocida" },
+    { "id": 20, "cantidad": 1 }
+  ]
+}
 ```
 
-- El usuario se toma **exclusivamente del JWT**; la fecha la asigna el servidor y el estado inicial es siempre `pendiente`. Si el cuerpo trae `id_usuario`, `fecha` o `estado`, se ignoran.
+- El usuario se toma **exclusivamente del JWT**; la fecha la asigna el servidor y el estado inicial es siempre `pendiente`. Si el cuerpo trae `id_usuario`, `fecha`, `estado` o precios, se ignoran.
 - `platos` debe ser un array no vacío de objetos con `id` entero positivo y `cantidad` entera mayor que 0 (si no → `400`). Si algún plato no existe → `404` y no se guarda nada.
-- El pedido y todas sus filas de PlatosXPedidos se guardan en **una transacción**: si falla cualquier paso se hace `ROLLBACK`.
-- Si un plato aparece repetido en el array, sus cantidades se **suman** en una sola fila.
+- `extras` (ids de ingredientes con su cantidad, 1 por defecto), `sin` (ids de ingredientes) y `aclaracion` (hasta 140 caracteres) son opcionales. Responde `400` si el plato no admite ese extra, si se supera el máximo, si el extra está agotado, si se quita algo que el plato no trae o si se agrega y se quita lo mismo.
+- El pedido, sus ítems y sus personalizaciones se guardan en **una transacción**: si falla cualquier paso se hace `ROLLBACK`.
+- Si un plato aparece repetido **con la misma personalización**, sus cantidades se **suman** en un solo ítem; con personalizaciones distintas quedan ítems separados.
 
 Respuesta `201` (mismo formato en todos los endpoints de pedidos):
 
@@ -357,13 +482,18 @@ Respuesta `201` (mismo formato en todos los endpoints de pedidos):
   "estado": "pendiente",
   "usuario": { "nombre": "Juan", "apellido": "Pérez", "email": "juanperez@gmail.com" },
   "platos": [
-    { "id": 1, "cantidad": 2, "nombre": "Clásica CUFAMBRE", "precio": 9900 },
-    { "id": 2, "cantidad": 1, "nombre": "Doble Cheddar Bacon", "precio": 12900 }
+    {
+      "id": 1, "cantidad": 2, "nombre": "Clásica King", "tipo": "principal", "precio": 11700,
+      "extras": [ { "id": 5, "nombre": "Cheddar", "cantidad": 2, "precio": 900 } ],
+      "sin": [ { "id": 14, "nombre": "Pepinos" } ],
+      "aclaracion": "bien cocida"
+    },
+    { "id": 20, "cantidad": 1, "nombre": "Gaseosa Cola 500 ml", "tipo": "bebida", "precio": 2800, "extras": [], "sin": [], "aclaracion": null }
   ]
 }
 ```
 
-Conserva los campos del ejemplo de la consigna (`id`, `id_usuario`, `fecha`, `estado`, `platos[].id`, `platos[].cantidad`) y agrega datos descriptivos no sensibles (`nombre` y `precio` de cada plato, y el nombre y email del cliente, útiles para el panel de administración). Los pedidos se listan del más nuevo al más viejo.
+Conserva los campos del ejemplo de la consigna (`id`, `id_usuario`, `fecha`, `estado`, `platos[].id`, `platos[].cantidad`) y agrega datos descriptivos no sensibles. En cada ítem, `precio` es el de **una unidad con sus extras** (9.900 + 2 × 900 = 11.700); el total del ítem es `precio × cantidad`. Los pedidos se listan del más nuevo al más viejo.
 
 **Cambios de estado**: el flujo es `pendiente → aceptado → en camino → entregado`. Saltar un paso o repetir una transición responde `409`:
 
@@ -383,7 +513,7 @@ Conserva los campos del ejemplo de la consigna (`id`, `id_usuario`, `fecha`, `es
 | Token ausente, mal formado, inválido o vencido | 401 |
 | Usuario autenticado sin permisos de administrador | 403 |
 | Recurso o ruta inexistente | 404 |
-| Email duplicado, transición de estado inválida o plato con pedidos | 409 |
+| Email o ingrediente duplicado, transición de estado inválida, plato o ingrediente con pedidos, quitarse el rol o eliminarse a uno mismo | 409 |
 | Cuerpo demasiado grande | 413 |
 | Base de datos no disponible | 503 |
 | Error inesperado del servidor | 500 |
@@ -391,7 +521,9 @@ Conserva los campos del ejemplo de la consigna (`id`, `id_usuario`, `fecha`, `es
 Ejemplos reales de respuestas de error:
 
 ```json
-{ "message": "Tipo de plato inválido. Los tipos válidos son: principal, combo, postre" }
+{ "message": "Tipo de plato inválido. Los tipos válidos son: principal, combo, postre, bebida" }
+{ "message": "A \"Clásica King\" se le pueden agregar como máximo 3 de Cheddar" }
+{ "message": "No podés quitarte tus propios permisos de administrador: pedíselo a otro administrador" }
 { "message": "Token vencido. Iniciá sesión nuevamente" }
 { "message": "Acceso denegado: se requieren permisos de administrador" }
 { "message": "No se puede eliminar el plato porque forma parte de uno o más pedidos" }
@@ -426,8 +558,8 @@ curl localhost:3000/pedidos/usuario -H "Authorization: Bearer $TOKEN"
 # 4. Un cliente no puede ver todos los pedidos (403)
 curl localhost:3000/pedidos -H "Authorization: Bearer $TOKEN"
 
-# 5. Convertir a otro usuario en administrador (SQL en Neon) e iniciar sesión con él
-#    UPDATE Usuarios SET admin = true WHERE email = 'admin@cufambre.com';
+# 5. Convertir a otro usuario en administrador e iniciar sesión con él
+#    npm run admin -- admin@kingsciarra.com   (o desde el panel, si ya hay un administrador)
 ADMIN=eyJ...
 
 # 6. Recorrer los estados (200 cada uno)
@@ -447,13 +579,21 @@ curl -X DELETE localhost:3000/pedidos/1 -H "Authorization: Bearer $ADMIN"
 
 ## Frontend
 
-Abrí `http://localhost:3000`. El frontend lo sirve el mismo servidor (no hace falta CORS) y usa solo los endpoints de la consigna:
+Abrí `http://localhost:3000`. El frontend lo sirve el mismo servidor (no hace falta CORS):
 
-- **Menú** con filtros Todo / Hamburguesas / Combos / Postres (`GET /platos` y `GET /platos/tipo/:tipo`).
-- **Carrito** con cantidades y total; al confirmar crea el pedido con `POST /pedidos`.
+- **Menú** con filtros Todo / Hamburguesas / Combos / Postres / Bebidas (`GET /platos`, `GET /platos/tipo/:tipo` y `GET /platos/opciones`). Los platos personalizables llevan el sello "Personalizable" y su precio "desde".
+- **Armar el plato**: hamburguesas y combos se abren en una ventana donde destildás lo que no querés, sumás extras con + y −, dejás una aclaración y elegís la cantidad; el total se recalcula en el momento. Al armar una hamburguesa podés **sumarle bebidas** con un toque. Postres y bebidas se agregan directo y también tienen un enlace "Personalizar".
+- **Carrito**: cada línea muestra su personalización (+extras, "sin…", aclaración) y se puede **editar**; dos líneas iguales se suman. Al confirmar crea el pedido con `POST /pedidos`. Si un extra dejó de estar disponible, el menú se recarga y el carrito se depura solo.
 - **Ingresar / Crear cuenta** (`POST /auth/login` y `POST /auth/register`). El JWT se guarda en el navegador y la sesión se cierra sola a los 30 minutos o ante cualquier `401`.
-- **Mis pedidos** con el progreso `pendiente → aceptado → en camino → entregado` (`GET /pedidos/usuario`, se actualiza cada 30 segundos).
-- **Panel de administración** (solo para administradores): pedidos filtrables por estado con los botones de cada transición y eliminación; alta, edición y baja de platos. Ocultar botones es solo comodidad: **la API verifica el rol en cada operación**.
+- **Mis pedidos** con el progreso `pendiente → aceptado → en camino → entregado` y el detalle de cada ítem (`GET /pedidos/usuario`, se actualiza cada 30 segundos).
+- **Panel de administración** (solo para administradores), en pestañas:
+  - **Resumen**: pedidos de hoy, pendientes, en curso, ventas totales, ticket promedio, usuarios, y rankings de lo más pedido, extras favoritos y bebidas.
+  - **Pedidos**: filtrables por estado, con los botones de cada transición y eliminación.
+  - **Platos**: alta, edición y baja (incluye el tipo bebida) y, en el mismo formulario, qué ingredientes trae y qué extras admite.
+  - **Ingredientes**: catálogo con precio de extra; marcar agotado / reponer; editar y eliminar.
+  - **Usuarios**: buscar, filtrar por rol, hacer o quitar admin, editar datos y eliminar cuentas.
+
+  Ocultar botones es solo comodidad: **la API verifica el rol en cada operación**.
 
 ### Identidad visual
 
@@ -463,17 +603,18 @@ Rojo tomate `#D92D20`, amarillo queso `#FFC83D`, crema `#FFF4DF` y marrón oscur
 
 Cada producto tiene su **propia ilustración SVG**, dibujada según sus ingredientes (pan, medallones, quesos, panceta, palta, jalapeños, provoleta con chimichurri, etc.):
 
-- `public/images/burgers/` — las 8 hamburguesas (`clasica-cufambre.svg`, `doble-cheddar-bacon.svg`, `la-picante.svg`, `crispy-chicken.svg`, `veggie-garden.svg`, `la-bestia.svg`, `azul-y-hongos.svg`, `la-argenta.svg`).
-- `public/images/combos/` — los 4 combos.
+- `public/images/burgers/` — las hamburguesas (`clasica-king.svg`, `la-king-sciarra.svg` con su corona, `doble-cheddar-bacon.svg`, `la-picante.svg`, `crispy-chicken.svg`, `veggie-garden.svg`, `la-bestia.svg`, `azul-y-hongos.svg`, `la-argenta.svg`).
+- `public/images/combos/` — los combos (incluido `combo-king.svg`).
 - `public/images/desserts/` — los 4 postres.
+- `public/images/drinks/` — las 6 bebidas.
 
-La tabla Platos de la consigna **no tiene columna de imagen**, y agregar una podría romper las pruebas que comparan los objetos exactos. Por eso la imagen se asocia **en el frontend por el nombre del plato** (`public/js/imagenes.js`): "Clásica CUFAMBRE" → `images/burgers/clasica-cufambre.svg`. Un plato nuevo que cargue un administrador (o uno renombrado) muestra la ilustración genérica de su tipo (`nueva-hamburguesa.svg`, `nuevo-combo.svg` o `nuevo-postre.svg`).
+La tabla Platos de la consigna **no tiene columna de imagen**, y agregar una podría romper las pruebas que comparan los objetos exactos. Por eso la imagen se asocia **en el frontend por el nombre del plato** (`public/js/imagenes.js`): "Clásica King" → `images/burgers/clasica-king.svg`. Un plato sin ilustración propia (por ejemplo Pulled Pork BBQ o uno que cargue un administrador) muestra la genérica de su tipo (`nueva-hamburguesa.svg`, `nuevo-combo.svg`, `nuevo-postre.svg` o `nueva-bebida.svg`).
 
 ---
 
 ## Pruebas automáticas
 
-Las pruebas usan `node:test` y una base **solo para pruebas** indicada en `TEST_DATABASE_URL` (puede ser una rama de Neon o un PostgreSQL local). Levantan la API en un puerto libre, ejecutan `schema.sql` y al terminar borran únicamente los datos que crearon (usuarios `@test.cufambre`, sus pedidos y platos `TEST …`).
+Las pruebas usan `node:test` y una base **solo para pruebas** indicada en `TEST_DATABASE_URL` (puede ser una rama de Neon o un PostgreSQL local). Levantan la API en un puerto libre, ejecutan `schema.sql` y al terminar borran únicamente los datos que crearon (usuarios `@test.kingsciarra`, sus pedidos y los platos e ingredientes `TEST …`).
 
 ```bash
 # En .env o en la terminal:
@@ -481,19 +622,23 @@ TEST_DATABASE_URL=postgresql://usuario:contraseña@host/base_de_pruebas?sslmode=
 npm test
 ```
 
-**63 pruebas** en 4 archivos:
+**84 pruebas** en 7 archivos:
 
 - **Platos** (`tests/platos.test.js`): listado y búsqueda; 404 por id inexistente; 400 por id o tipo inválido; filtro por tipo; sin token → 401; usuario común → 403; un admin crea, modifica y elimina; datos incompletos o inválidos → 400; PUT valida id, existencia y datos; borrar un plato que está en un pedido → 409 sin borrar nada.
 - **Autenticación** (`tests/auth.test.js`): registro válido (201) sin contraseña en la respuesta; `admin` queda en `false` aunque se envíe `true`; la contraseña se guarda como hash bcrypt; normalización del email; email duplicado → 409; datos inválidos → 400; login correcto con token; payload `{ id }` y vencimiento de exactamente 30 minutos; credenciales incorrectas → 401; token ausente, mal formado, vencido, firmado con otra clave o con `alg: none` → 401; usuario del token inexistente → 401; ninguna respuesta contiene el hash.
 - **Pedidos** (`tests/pedidos.test.js`): visitante → 401; creación con usuario del JWT, fecha del servidor y estado `pendiente`; cantidades guardadas en PlatosXPedidos; se ignoran `id_usuario`, `fecha` y `estado` enviados; suma de platos repetidos; cuerpos inválidos → 400; plato inexistente → 404 sin guardar nada; **transacción**: si falla la segunda relación no queda ni el pedido ni la primera relación; cada usuario ve solo sus pedidos (aunque mande otro id por query string); solo admin lista todo, ve un pedido, cambia estados y elimina; flujo completo de estados; transiciones inválidas → 409; eliminación con sus relaciones.
-- **Infraestructura** (`tests/infraestructura.test.js`): `dbconfig` (prioridad de `DATABASE_URL`, variables sueltas, puerto 5432 por defecto, asteriscos como "sin configurar", SSL siempre verificado, errores sin contraseñas); estructura real de las tablas, tipos, claves primarias y foráneas; restricciones CHECK/UNIQUE/FK; `schema.sql` idempotente; errores en JSON (ruta inexistente, JSON mal formado, 500 sin detalles internos); las rutas específicas no son capturadas por `/:id`; ni respuestas ni registros muestran la contraseña de la base o `JWT_SECRET`.
+- **Personalización** (`tests/personalizacion.test.js`): el precio suma los extras y quitar no descuenta; se guarda la aclaración; el precio guardado no cambia si después sube un extra; mismo plato con personalizaciones distintas → ítems separados; extras no admitidos, por encima del máximo, agotados, quitar lo que no viene o agregar y quitar lo mismo → 400 sin guardar nada; se ignora un precio enviado por el cliente; borrar el pedido borra sus personalizaciones.
+- **Ingredientes** (`tests/ingredientes.test.js`): catálogo público; solo admin crea, modifica y elimina; validaciones y nombres repetidos sin distinguir mayúsculas → 409; reemplazo y lectura de las opciones de un plato; validación de máximos y de ids; `/platos/opciones` omite los agotados; un ingrediente que figura en pedidos no se borra (409).
+- **Usuarios** (`tests/usuarios.test.js`): todas las rutas exigen token y rol; listado con cantidad de pedidos y sin contraseñas; dar y quitar el rol (vale al instante con el mismo token); nadie se quita su propio rol ni elimina su propia cuenta; edición con email normalizado y sin duplicados (la contraseña no cambia); eliminar una cuenta borra sus pedidos y su token deja de servir.
+- **Infraestructura** (`tests/infraestructura.test.js`): `dbconfig` (prioridad de `DATABASE_URL`, variables sueltas, puerto 5432 por defecto, asteriscos como "sin configurar", SSL siempre verificado, errores sin contraseñas); estructura real de las 7 tablas, tipos, claves primarias y foráneas; restricciones CHECK/UNIQUE/FK (también las de ingredientes); `schema.sql` idempotente; errores en JSON (ruta inexistente, JSON mal formado, 500 sin detalles internos); las rutas específicas no son capturadas por `/:id`; ni respuestas ni registros muestran la contraseña de la base o `JWT_SECRET`.
 
 ### Qué se probó y qué falta probar con Neon
 
-- ✅ Las 63 pruebas pasan contra **PostgreSQL 16 local**, tanto sin SSL como con **SSL verificado (verify-full) y channel binding** usando una CA de prueba propia.
-- ✅ Se verificó que la conexión **falla** si el certificado no es de una CA confiable o no corresponde al host, y que se rechazan `sslmode=no-verify` y `sslmode=disable` con un host remoto.
-- ✅ Recorrido completo del frontend en Chromium (escritorio y celular): menú, filtros, carrito, registro, pedido, cambios de estado desde el panel admin, alta/edición/baja de platos, 409 al borrar un plato con pedidos y cierre de sesión ante un token inválido.
-- ⏳ **Pendiente: la conexión real a Neon**, porque requiere tus credenciales. Con el `.env` completo, verificala con `npm run db:init` (debe mostrar "SSL con certificado verificado" y las 4 tablas) y, si querés, corré `npm test` contra una rama de Neon usada solo para pruebas.
+- ✅ Las 84 pruebas pasan contra **PostgreSQL 18** (PGlite, en memoria).
+- ✅ La migración de una base de la versión anterior (CUFAMBRE) con pedidos: conserva los datos, acepta bebidas y el mismo plato dos veces en un pedido; `schema.sql` se puede ejecutar dos veces seguidas.
+- ✅ `npm run db:seed` dos veces seguidas: la primera renombra la Clásica y agrega platos, ingredientes y opciones; la segunda no inserta nada.
+- ✅ Recorrido del frontend en Chrome (escritorio y celular): armar una hamburguesa (quitar, extras, bebida, aclaración, cantidad), totales iguales a los del servidor, editar la línea desde el carrito, confirmar el pedido, resumen, dar el rol de admin y editar un usuario, marcar un ingrediente agotado y editar los ingredientes de un plato; sin errores en la consola ni desplazamiento horizontal.
+- ⏳ **Pendiente: la conexión real a Neon**, porque requiere tus credenciales. Con el `.env` completo, verificala con `npm run db:init` (debe mostrar "SSL con certificado verificado" y las 7 tablas) y, si querés, corré `npm test` contra una rama de Neon usada solo para pruebas.
 
 ---
 
@@ -501,8 +646,10 @@ npm test
 
 - **Capas**: `routes` (HTTP) → `services` (validación y reglas; no conocen `req`/`res`) → `controllers` (SQL con pg). Las transacciones las coordina el servicio con `conTransaccion()`, que reparte un mismo cliente a todas las consultas.
 - **Express 5**: los errores de los handlers `async` llegan solos al middleware de errores.
-- **Campos de control**: en `POST /pedidos` se ignoran `id_usuario`, `fecha` y `estado`; en el registro se ignora `admin`; en platos se ignora `id`. Solo se leen los campos permitidos.
-- **Platos repetidos en un pedido**: se suman en una sola fila (`UNIQUE (id_pedido, id_plato)`).
+- **Campos de control**: en `POST /pedidos` se ignoran `id_usuario`, `fecha`, `estado` y cualquier precio; en el registro se ignora `admin`; en platos se ignora `id`; en `PUT /usuarios/:id` se ignora `admin` (el rol solo cambia por `/usuarios/:id/admin`). Solo se leen los campos permitidos.
+- **Platos repetidos en un pedido**: con la misma personalización se suman en un solo ítem; con otra quedan como ítems distintos (por eso ya no existe `UNIQUE (id_pedido, id_plato)`).
+- **Precios de los pedidos**: se guardan al crear el pedido (`precio_unitario` y el precio de cada extra), calculados por el servidor; los pedidos anteriores a la personalización usan el precio actual del plato.
+- **Ingredientes agotados**: en vez de borrarlos se marcan como no disponibles; así los pedidos viejos conservan su detalle y el ingrediente vuelve con un clic.
 - **PUT /platos/:id** reemplaza el plato completo: exige los cuatro campos.
 - **Tipos y emails** se normalizan (espacios y minúsculas) antes de validar y guardar.
 - **Fecha del pedido**: la asigna PostgreSQL con la hora de Argentina (`America/Argentina/Buenos_Aires`), porque Neon trabaja en UTC y un pedido de las 22 h quedaría con la fecha del día siguiente. Las columnas DATE se devuelven como texto `AAAA-MM-DD`.
@@ -511,7 +658,7 @@ npm test
 - **Eliminar un plato**: lo impide la FK `ON DELETE RESTRICT` si ya se pidió (409), y así los pedidos históricos siguen completos. Para sacarlo del menú en ese caso, se puede editar.
 - **Seguridad del login**: mismo mensaje y un tiempo de respuesta similar si el email no existe (se compara contra un hash ficticio). Los JWT se verifican fijando el algoritmo HS256.
 - **Caché**: las respuestas de la API llevan `Cache-Control: no-store`.
-- **Precios de pedidos anteriores**: la tabla PlatosXPedidos de la consigna no guarda el precio, así que los totales se calculan con el precio actual de cada plato.
+- **Claves foráneas en PostgreSQL 18**: un borrado frenado por `ON DELETE RESTRICT` se informa con el código `23001` (antes `23503`); la API trata los dos como 409.
 
 ---
 

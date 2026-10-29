@@ -1,32 +1,55 @@
-# 🗄️ CUFAMBRE · Base de datos
+# 🗄️ King Sciarra · Base de datos
 
-Este documento describe las **4 tablas** que necesita la API de CUFAMBRE (consigna BurgerTIC): sus campos, tipos, claves primarias (PK), claves foráneas (FK) y restricciones. Al final está el **SQL listo para pegar** en Neon o en Vercel Postgres.
+Este documento describe las **7 tablas** de la API de King Sciarra: las 4 de la consigna BurgerTIC (Platos, Usuarios, Pedidos y PlatosXPedidos) y las 3 que agrega la **personalización de platos** (Ingredientes, IngredientesXPlatos y Personalizaciones). Para cada una: campos, tipos, claves primarias (PK), claves foráneas (FK) y restricciones.
 
-> El script completo está en [`database/neon_setup.sql`](database/neon_setup.sql). Crea las tablas y carga el menú de ejemplo.
+> El SQL está en [`database/schema.sql`](database/schema.sql) (lo ejecuta el servidor al iniciar) y, junto con el menú de ejemplo, en [`database/neon_setup.sql`](database/neon_setup.sql), listo para pegar en el SQL Editor de Neon o Vercel.
 
 ---
 
 ## Diagrama de relaciones
 
 ```
-┌──────────────┐        ┌──────────────┐        ┌──────────────────┐        ┌──────────────┐
-│   Usuarios   │        │   Pedidos    │        │  PlatosXPedidos  │        │    Platos    │
-├──────────────┤        ├──────────────┤        ├──────────────────┤        ├──────────────┤
-│ PK id        │1──────N│ PK id        │1──────N│ PK id            │N──────1│ PK id        │
-│    nombre    │        │ FK id_usuario│        │ FK id_pedido     │        │    tipo      │
-│    apellido  │        │    fecha     │        │ FK id_plato      │        │    nombre    │
-│    email     │        │    estado    │        │    cantidad      │        │    precio    │
-│    password  │        └──────────────┘        └──────────────────┘        │    descripcion│
-│    admin     │                                                           └──────────────┘
-└──────────────┘
+┌────────────┐      ┌──────────────┐      ┌──────────────────┐      ┌──────────────┐
+│  Usuarios  │      │   Pedidos    │      │  PlatosXPedidos  │      │    Platos    │
+├────────────┤      ├──────────────┤      ├──────────────────┤      ├──────────────┤
+│ PK id      │1────N│ PK id        │1────N│ PK id            │N────1│ PK id        │
+│  nombre    │      │ FK id_usuario│      │ FK id_pedido     │      │  tipo        │
+│  apellido  │      │  fecha       │      │ FK id_plato      │      │  nombre      │
+│  email     │      │  estado      │      │  cantidad        │      │  precio      │
+│  password  │      └──────────────┘      │  precio_unitario │      │  descripcion │
+│  admin     │                            │  aclaracion      │      └──────────────┘
+└────────────┘                            └──────────────────┘             1
+                                                   1                       │
+                                                   │                       N
+                                                   N              ┌─────────────────────┐
+                                        ┌───────────────────┐     │ IngredientesXPlatos │
+                                        │ Personalizaciones │     ├─────────────────────┤
+                                        ├───────────────────┤     │ PK id               │
+                                        │ PK id             │     │ FK id_plato         │
+                                        │ FK id_item        │     │ FK id_ingrediente   │
+                                        │ FK id_ingrediente │     │  incluido           │
+                                        │  accion           │     │  maximo             │
+                                        │  cantidad         │     └─────────────────────┘
+                                        │  precio           │                N
+                                        └───────────────────┘                │
+                                                   N      ┌──────────────┐   │
+                                                   └─────1│ Ingredientes │1──┘
+                                                          ├──────────────┤
+                                                          │ PK id        │
+                                                          │  nombre      │
+                                                          │  precio      │
+                                                          │  disponible  │
+                                                          └──────────────┘
 ```
 
 - **Usuarios → Pedidos (1 a N):** un usuario puede tener muchos pedidos (`Pedidos.id_usuario`).
-- **Pedidos ↔ Platos (N a N):** un pedido tiene muchos platos y un plato puede estar en muchos pedidos. Se resuelve con la tabla intermedia **PlatosXPedidos**, que además guarda la `cantidad`.
+- **Pedidos ↔ Platos (N a N):** se resuelve con la tabla intermedia **PlatosXPedidos**. Cada fila es un **ítem** con su cantidad, su precio unitario y su aclaración; el mismo plato puede aparecer dos veces en un pedido si se personalizó distinto.
+- **Platos ↔ Ingredientes (N a N):** **IngredientesXPlatos** dice qué trae cada plato (`incluido`, se puede quitar) y cuántas unidades extra admite (`maximo`).
+- **Ítem ↔ Ingredientes (N a N):** **Personalizaciones** guarda qué se agregó (`agregar`, con cantidad y precio) o se quitó (`quitar`) de cada ítem.
 
 ### Orden de creación
 
-Las FK obligan a crear las tablas en este orden: **Platos → Usuarios → Pedidos → PlatosXPedidos**.
+Las FK obligan a crear las tablas en este orden: **Platos → Usuarios → Pedidos → PlatosXPedidos → Ingredientes → IngredientesXPlatos → Personalizaciones**.
 
 ---
 
@@ -34,56 +57,84 @@ Las FK obligan a crear las tablas en este orden: **Platos → Usuarios → Pedid
 
 Todos los `id` son `INTEGER GENERATED BY DEFAULT AS IDENTITY`, la forma moderna de PostgreSQL de hacer un número autoincremental. Funciona igual que `SERIAL`: no se envía el `id` al insertar y la base asigna 1, 2, 3…
 
-| Opción | Equivale a |
-| --- | --- |
-| `id INTEGER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY` ✅ (la que usa el proyecto) | `id SERIAL PRIMARY KEY` |
-
-Las **claves foráneas** (`id_usuario`, `id_pedido`, `id_plato`) son `INTEGER` comunes, **no** `SERIAL`, porque guardan el `id` de otra tabla en vez de generar uno nuevo.
+Las **claves foráneas** (`id_usuario`, `id_pedido`, `id_plato`, `id_ingrediente`, `id_item`) son `INTEGER` comunes, **no** `SERIAL`, porque guardan el `id` de otra tabla en vez de generar uno nuevo. Si tu cátedra pide `SERIAL`, podés reemplazar cada línea de `id` por `id SERIAL,`: el resultado es el mismo.
 
 ---
 
 ## 1. Tabla `Platos`
 
-Catálogo de comidas.
-
 | Campo | Tipo SQL | Clave | Nulo | Restricciones / descripción |
 | --- | --- | --- | --- | --- |
-| `id` | `INTEGER` IDENTITY (≈ SERIAL) | **PK** | No | Autoincremental |
-| `tipo` | `VARCHAR(20)` | | No | Solo `'principal'`, `'combo'` o `'postre'` |
+| `id` | `INTEGER` IDENTITY | **PK** | No | Autoincremental |
+| `tipo` | `VARCHAR(20)` | | No | Solo `'principal'`, `'combo'`, `'postre'` o `'bebida'` |
 | `nombre` | `VARCHAR(70)` | | No | No puede estar vacío |
-| `precio` | `INTEGER` | | No | Entero `>= 0` (en pesos, sin decimales) |
+| `precio` | `INTEGER` | | No | Entero `>= 0` (precio base en pesos, sin decimales) |
 | `descripcion` | `VARCHAR(400)` | | No | No puede estar vacía |
 
 ## 2. Tabla `Usuarios`
 
 | Campo | Tipo SQL | Clave | Nulo | Restricciones / descripción |
 | --- | --- | --- | --- | --- |
-| `id` | `INTEGER` IDENTITY (≈ SERIAL) | **PK** | No | Autoincremental |
+| `id` | `INTEGER` IDENTITY | **PK** | No | Autoincremental |
 | `nombre` | `VARCHAR(50)` | | No | No puede estar vacío |
 | `apellido` | `VARCHAR(50)` | | No | No puede estar vacío |
 | `email` | `VARCHAR(256)` | **UNIQUE** | No | No se repite; la API lo guarda en minúsculas |
 | `password` | `VARCHAR(256)` | | No | **Hash de bcrypt**, nunca la contraseña original |
-| `admin` | `BOOLEAN` | | No | Por defecto `FALSE`; solo se cambia a mano en la base |
+| `admin` | `BOOLEAN` | | No | Por defecto `FALSE`. El primero se asigna con `npm run admin -- email`; después, desde el panel |
 
 ## 3. Tabla `Pedidos`
 
 | Campo | Tipo SQL | Clave | Nulo | Restricciones / descripción |
 | --- | --- | --- | --- | --- |
-| `id` | `INTEGER` IDENTITY (≈ SERIAL) | **PK** | No | Autoincremental |
-| `id_usuario` | `INTEGER` | **FK → `Usuarios.id`** | No | `ON DELETE RESTRICT`: no se puede borrar un usuario que tiene pedidos |
+| `id` | `INTEGER` IDENTITY | **PK** | No | Autoincremental |
+| `id_usuario` | `INTEGER` | **FK → `Usuarios.id`** | No | `ON DELETE RESTRICT`: para borrar un usuario, la API borra antes sus pedidos (en una transacción) |
 | `fecha` | `DATE` | | No | Por defecto la fecha actual (la API usa la hora de Argentina) |
 | `estado` | `VARCHAR(50)` | | No | Por defecto `'pendiente'`; solo `'pendiente'`, `'aceptado'`, `'en camino'` o `'entregado'` |
 
-## 4. Tabla `PlatosXPedidos` (intermedia)
+## 4. Tabla `PlatosXPedidos` (intermedia: ítems de cada pedido)
 
 | Campo | Tipo SQL | Clave | Nulo | Restricciones / descripción |
 | --- | --- | --- | --- | --- |
-| `id` | `INTEGER` IDENTITY (≈ SERIAL) | **PK** | No | Autoincremental |
-| `id_pedido` | `INTEGER` | **FK → `Pedidos.id`** | No | `ON DELETE CASCADE`: al borrar el pedido se borran sus filas acá |
+| `id` | `INTEGER` IDENTITY | **PK** | No | Autoincremental |
+| `id_pedido` | `INTEGER` | **FK → `Pedidos.id`** | No | `ON DELETE CASCADE`: al borrar el pedido se borran sus ítems |
 | `id_plato` | `INTEGER` | **FK → `Platos.id`** | No | `ON DELETE RESTRICT`: un plato ya pedido no se puede borrar |
 | `cantidad` | `INTEGER` | | No | Entero `> 0` |
+| `precio_unitario` | `INTEGER` | | Sí | Precio de una unidad con sus extras al momento del pedido (`>= 0`). Nulo en pedidos anteriores a la personalización |
+| `aclaracion` | `VARCHAR(140)` | | Sí | Texto libre para la cocina ("bien cocida") |
 
-Además, `UNIQUE (id_pedido, id_plato)` impide repetir el mismo plato dentro de un pedido: si se pide dos veces, la API suma las cantidades.
+## 5. Tabla `Ingredientes`
+
+| Campo | Tipo SQL | Clave | Nulo | Restricciones / descripción |
+| --- | --- | --- | --- | --- |
+| `id` | `INTEGER` IDENTITY | **PK** | No | Autoincremental |
+| `nombre` | `VARCHAR(60)` | **UNIQUE** (sin distinguir mayúsculas) | No | Índice único sobre `LOWER(nombre)` |
+| `precio` | `INTEGER` | | No | Costo de cada unidad agregada como extra (`>= 0`; 0 = sin cargo) |
+| `disponible` | `BOOLEAN` | | No | Por defecto `TRUE`. En `FALSE` (agotado) no se ofrece como extra |
+
+## 6. Tabla `IngredientesXPlatos` (intermedia: qué admite cada plato)
+
+| Campo | Tipo SQL | Clave | Nulo | Restricciones / descripción |
+| --- | --- | --- | --- | --- |
+| `id` | `INTEGER` IDENTITY | **PK** | No | Autoincremental |
+| `id_plato` | `INTEGER` | **FK → `Platos.id`** | No | `ON DELETE CASCADE` |
+| `id_ingrediente` | `INTEGER` | **FK → `Ingredientes.id`** | No | `ON DELETE CASCADE` |
+| `incluido` | `BOOLEAN` | | No | `TRUE`: viene en el plato y el cliente lo puede quitar |
+| `maximo` | `INTEGER` | | No | Unidades extra permitidas, entre 0 y 10 |
+
+Además: `UNIQUE (id_plato, id_ingrediente)` y `CHECK (incluido OR maximo > 0)` (si no viene incluido, tiene que poder agregarse).
+
+## 7. Tabla `Personalizaciones` (cambios de cada ítem)
+
+| Campo | Tipo SQL | Clave | Nulo | Restricciones / descripción |
+| --- | --- | --- | --- | --- |
+| `id` | `INTEGER` IDENTITY | **PK** | No | Autoincremental |
+| `id_item` | `INTEGER` | **FK → `PlatosXPedidos.id`** | No | `ON DELETE CASCADE` |
+| `id_ingrediente` | `INTEGER` | **FK → `Ingredientes.id`** | No | `ON DELETE RESTRICT`: un ingrediente ya pedido no se borra (se marca agotado) |
+| `accion` | `VARCHAR(10)` | | No | `'agregar'` o `'quitar'` |
+| `cantidad` | `INTEGER` | | No | `> 0` (unidades extra; 1 para `quitar`) |
+| `precio` | `INTEGER` | | No | Precio unitario del extra al momento del pedido (`>= 0`; 0 para `quitar`) |
+
+Además: `UNIQUE (id_item, id_ingrediente)`.
 
 ---
 
@@ -94,7 +145,10 @@ Además, `UNIQUE (id_pedido, id_plato)` impide repetir el mismo plato dentro de 
 | Platos | `id` | — | — |
 | Usuarios | `id` | — | `email` |
 | Pedidos | `id` | `id_usuario` → `Usuarios(id)` | — |
-| PlatosXPedidos | `id` | `id_pedido` → `Pedidos(id)` · `id_plato` → `Platos(id)` | `(id_pedido, id_plato)` |
+| PlatosXPedidos | `id` | `id_pedido` → `Pedidos(id)` · `id_plato` → `Platos(id)` | — |
+| Ingredientes | `id` | — | `LOWER(nombre)` |
+| IngredientesXPlatos | `id` | `id_plato` → `Platos(id)` · `id_ingrediente` → `Ingredientes(id)` | `(id_plato, id_ingrediente)` |
+| Personalizaciones | `id` | `id_item` → `PlatosXPedidos(id)` · `id_ingrediente` → `Ingredientes(id)` | `(id_item, id_ingrediente)` |
 
 ---
 
@@ -104,8 +158,8 @@ Además, `UNIQUE (id_pedido, id_plato)` impide repetir el mismo plato dentro de 
 
 1. Entrá a [console.neon.tech](https://console.neon.tech) y abrí tu proyecto.
 2. En el menú de la izquierda, entrá a **SQL Editor** y elegí la base (por defecto `neondb`).
-3. Pegá el SQL de abajo (o todo `database/neon_setup.sql`) y apretá **Run**.
-4. La última consulta tiene que mostrar las 4 tablas.
+3. Pegá todo `database/neon_setup.sql` y apretá **Run**.
+4. La última consulta tiene que mostrar las 7 tablas.
 
 ### En Vercel (Vercel Postgres / Neon desde el Marketplace)
 
@@ -117,114 +171,47 @@ Además, `UNIQUE (id_pedido, id_plato)` impide repetir el mismo plato dentro de 
 ### Desde la terminal
 
 ```bash
-npm run db:seed                                   # usa el .env: crea las tablas y carga el menú
+npm run db:seed                                   # usa el .env: crea/actualiza las tablas y carga el menú
 # o con psql:
 psql "$DATABASE_URL" -f database/neon_setup.sql
 ```
 
-> **Importante:** PostgreSQL guarda en minúsculas los nombres escritos sin comillas. En el panel vas a ver `platos`, `usuarios`, `pedidos` y `platosxpedidos`. Igual podés consultar escribiendo `SELECT * FROM Platos;`. No uses comillas dobles (`"Platos"`), porque así PostgreSQL busca el nombre con mayúscula y no lo encuentra.
+Los dos caminos se pueden repetir: no borran ni duplican datos, y también **actualizan una base de la versión anterior (CUFAMBRE)** agregando lo nuevo.
+
+> **Importante:** PostgreSQL guarda en minúsculas los nombres escritos sin comillas. En el panel vas a ver `platos`, `usuarios`, `ingredientesxplatos`, etc. Igual podés consultar escribiendo `SELECT * FROM Platos;`. No uses comillas dobles (`"Platos"`), porque así PostgreSQL busca el nombre con mayúscula y no lo encuentra.
 
 ---
 
-## SQL para crear las tablas
+## Datos de ejemplo
 
-Se puede ejecutar varias veces: `IF NOT EXISTS` evita errores y no borra datos.
+`neon_setup.sql` y `npm run db:seed` cargan **25 platos** (10 hamburguesas, 5 combos, 4 postres y 6 bebidas), **44 ingredientes y extras** y qué admite cada plato. Solo agregan lo que falta: los platos se comparan por nombre y las opciones se cargan únicamente en los platos que todavía no tienen ninguna.
 
-```sql
-BEGIN;
-
--- 1. Platos
-CREATE TABLE IF NOT EXISTS Platos (
-    id          INTEGER      GENERATED BY DEFAULT AS IDENTITY,  -- PK autoincremental (equivale a SERIAL)
-    tipo        VARCHAR(20)  NOT NULL,
-    nombre      VARCHAR(70)  NOT NULL,
-    precio      INTEGER      NOT NULL,
-    descripcion VARCHAR(400) NOT NULL,
-    CONSTRAINT platos_pk PRIMARY KEY (id),
-    CONSTRAINT platos_tipo_valido CHECK (tipo IN ('principal', 'combo', 'postre')),
-    CONSTRAINT platos_precio_no_negativo CHECK (precio >= 0),
-    CONSTRAINT platos_nombre_no_vacio CHECK (btrim(nombre) <> ''),
-    CONSTRAINT platos_descripcion_no_vacia CHECK (btrim(descripcion) <> '')
-);
-
--- 2. Usuarios
-CREATE TABLE IF NOT EXISTS Usuarios (
-    id       INTEGER      GENERATED BY DEFAULT AS IDENTITY,     -- PK autoincremental
-    nombre   VARCHAR(50)  NOT NULL,
-    apellido VARCHAR(50)  NOT NULL,
-    email    VARCHAR(256) NOT NULL,
-    password VARCHAR(256) NOT NULL,                             -- hash de bcrypt
-    admin    BOOLEAN      NOT NULL DEFAULT FALSE,
-    CONSTRAINT usuarios_pk PRIMARY KEY (id),
-    CONSTRAINT usuarios_email_unico UNIQUE (email),
-    CONSTRAINT usuarios_nombre_no_vacio CHECK (btrim(nombre) <> ''),
-    CONSTRAINT usuarios_apellido_no_vacio CHECK (btrim(apellido) <> '')
-);
-
--- 3. Pedidos
-CREATE TABLE IF NOT EXISTS Pedidos (
-    id         INTEGER     GENERATED BY DEFAULT AS IDENTITY,    -- PK autoincremental
-    id_usuario INTEGER     NOT NULL,                             -- FK -> Usuarios.id
-    fecha      DATE        NOT NULL DEFAULT CURRENT_DATE,
-    estado     VARCHAR(50) NOT NULL DEFAULT 'pendiente',
-    CONSTRAINT pedidos_pk PRIMARY KEY (id),
-    CONSTRAINT pedidos_usuario_fk FOREIGN KEY (id_usuario)
-        REFERENCES Usuarios (id) ON DELETE RESTRICT,
-    CONSTRAINT pedidos_estado_valido
-        CHECK (estado IN ('pendiente', 'aceptado', 'en camino', 'entregado'))
-);
-
--- 4. PlatosXPedidos (intermedia)
-CREATE TABLE IF NOT EXISTS PlatosXPedidos (
-    id        INTEGER GENERATED BY DEFAULT AS IDENTITY,          -- PK autoincremental
-    id_pedido INTEGER NOT NULL,                                  -- FK -> Pedidos.id
-    id_plato  INTEGER NOT NULL,                                  -- FK -> Platos.id
-    cantidad  INTEGER NOT NULL,
-    CONSTRAINT platosxpedidos_pk PRIMARY KEY (id),
-    CONSTRAINT platosxpedidos_pedido_fk FOREIGN KEY (id_pedido)
-        REFERENCES Pedidos (id) ON DELETE CASCADE,
-    CONSTRAINT platosxpedidos_plato_fk FOREIGN KEY (id_plato)
-        REFERENCES Platos (id) ON DELETE RESTRICT,
-    CONSTRAINT platosxpedidos_cantidad_positiva CHECK (cantidad > 0),
-    CONSTRAINT platosxpedidos_plato_unico_por_pedido UNIQUE (id_pedido, id_plato)
-);
-
--- Índices para las búsquedas por clave foránea
-CREATE INDEX IF NOT EXISTS pedidos_id_usuario_idx ON Pedidos (id_usuario);
-CREATE INDEX IF NOT EXISTS platosxpedidos_id_plato_idx ON PlatosXPedidos (id_plato);
-
-COMMIT;
-```
-
-### Versión con `SERIAL` (equivalente)
-
-Si tu cátedra pide `SERIAL`, podés reemplazar cada línea de `id` por esta. El resultado es el mismo:
-
-```sql
-id SERIAL,   -- en lugar de: id INTEGER GENERATED BY DEFAULT AS IDENTITY,
-```
-
----
-
-## Datos de ejemplo (opcional)
-
-El menú de 16 platos (8 hamburguesas, 4 combos y 4 postres) está al final de [`database/neon_setup.sql`](database/neon_setup.sql). Solo se inserta si la tabla Platos está vacía. También podés cargarlo con `npm run db:seed`.
+Para llenar también **usuarios y pedidos**, ejecutá después [`database/datos_demo.sql`](database/datos_demo.sql) (o `npm run db:demo`): 13 usuarios `@demo.kingsciarra.com` con la contraseña `clave123` (una administradora y 12 clientes) y 49 pedidos de las últimas 3 semanas, con platos personalizados, bebidas y postres. Se puede repetir sin duplicar nada. Son cuentas con contraseña conocida: no lo cargues en una base pública.
 
 ## Crear un administrador
 
-No hay ninguna ruta para crear administradores: el rol se asigna en la base. Primero registrá el usuario desde la app o con `POST /auth/register`, y después ejecutá:
+Registrá el usuario desde la app o con `POST /auth/register`, y después:
+
+```bash
+npm run admin -- tu-email@ejemplo.com
+```
+
+o en el SQL Editor:
 
 ```sql
 UPDATE Usuarios SET admin = true WHERE email = 'tu-email@ejemplo.com';
 ```
 
+A partir de ahí, los administradores dan o quitan el rol a otros desde **Panel → Usuarios**.
+
 ## Consultas útiles para verificar
 
 ```sql
--- ¿Existen las 4 tablas?
+-- ¿Existen las 7 tablas?
 SELECT table_name FROM information_schema.tables
  WHERE table_schema = 'public'
-   AND table_name IN ('platos', 'usuarios', 'pedidos', 'platosxpedidos');
+   AND table_name IN ('platos', 'usuarios', 'pedidos', 'platosxpedidos',
+                      'ingredientes', 'ingredientesxplatos', 'personalizaciones');
 
 -- Claves foráneas definidas
 SELECT conrelid::regclass AS tabla, conname AS restriccion, pg_get_constraintdef(oid) AS definicion
@@ -232,13 +219,26 @@ SELECT conrelid::regclass AS tabla, conname AS restriccion, pg_get_constraintdef
  WHERE contype = 'f'
  ORDER BY tabla;
 
--- Pedidos con sus platos y cantidades
-SELECT p.id AS pedido, u.email, p.fecha, p.estado, pl.nombre, pp.cantidad
+-- Qué trae y qué admite un plato
+SELECT i.nombre, ixp.incluido, ixp.maximo, i.precio AS precio_extra, i.disponible
+  FROM IngredientesXPlatos ixp
+  JOIN Ingredientes i ON i.id = ixp.id_ingrediente
+  JOIN Platos p       ON p.id = ixp.id_plato
+ WHERE p.nombre = 'Clásica King'
+ ORDER BY ixp.incluido DESC, i.nombre;
+
+-- Pedidos con sus ítems, precio y personalización
+SELECT p.id AS pedido, u.email, p.estado, pl.nombre, pp.cantidad,
+       COALESCE(pp.precio_unitario, pl.precio) AS precio_unitario, pp.aclaracion,
+       string_agg(CASE pz.accion WHEN 'agregar' THEN '+' || pz.cantidad || ' ' ELSE 'sin ' END || i.nombre, ', ') AS cambios
   FROM Pedidos p
-  JOIN Usuarios u        ON u.id = p.id_usuario
-  JOIN PlatosXPedidos pp ON pp.id_pedido = p.id
-  JOIN Platos pl         ON pl.id = pp.id_plato
- ORDER BY p.id;
+  JOIN Usuarios u              ON u.id = p.id_usuario
+  JOIN PlatosXPedidos pp       ON pp.id_pedido = p.id
+  JOIN Platos pl               ON pl.id = pp.id_plato
+  LEFT JOIN Personalizaciones pz ON pz.id_item = pp.id
+  LEFT JOIN Ingredientes i     ON i.id = pz.id_ingrediente
+ GROUP BY p.id, u.email, pl.nombre, pl.precio, pp.id
+ ORDER BY p.id, pp.id;
 ```
 
 ## Borrar todo y empezar de cero (⚠️ elimina los datos)
@@ -246,5 +246,5 @@ SELECT p.id AS pedido, u.email, p.fecha, p.estado, pl.nombre, pp.cantidad
 Solo si querés reiniciar la base. El orden es el inverso al de creación:
 
 ```sql
-DROP TABLE IF EXISTS PlatosXPedidos, Pedidos, Usuarios, Platos;
+DROP TABLE IF EXISTS Personalizaciones, IngredientesXPlatos, Ingredientes, PlatosXPedidos, Pedidos, Usuarios, Platos;
 ```

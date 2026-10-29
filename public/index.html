@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>KING SCIARRA · Hamburguesería</title>
-  <meta name="description" content="Hamburguesas smash, combos y postres. Pedí online en CUFAMBRE y seguí el estado de tu pedido.">
+  <title>King Sciarra · Hamburguesería</title>
+  <meta name="description" content="Hamburguesas smash, combos, postres y bebidas que armás a tu gusto. Pedí online en King Sciarra y seguí el estado de tu pedido.">
   <meta name="theme-color" content="#D92D20">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,7 +18,7 @@
 
   <header class="barra">
     <div class="contenedor barra__interior">
-      <a class="marca" href="#inicio" aria-label="CUFAMBRE, ir al inicio">
+      <a class="marca" href="#inicio" aria-label="King Sciarra, ir al inicio">
         <img src="images/logo.svg" alt="" width="44" height="44">
         <span>KING SCIARRA</span>
       </a>
@@ -48,16 +48,16 @@
     <section class="hero" id="inicio">
       <div class="contenedor hero__interior">
         <div class="hero__texto">
-          <p class="etiqueta">Smash burgers · Combos · Postres</p>
-          <h1>¿hambre?<span>Nosotros lo resolvemos.</span></h1>
-          <p class="hero__bajada">Hamburguesas jugosas hechas al momento, papas crocantes y postres para cerrar con todo. Pedí online y seguí tu pedido desde que lo aceptamos hasta que llega a tu puerta.</p>
+          <p class="etiqueta">Smash burgers · Combos · Postres · Bebidas</p>
+          <h1>¿HAMBRE?<span>Nosotros lo resolvemos.</span></h1>
+          <p class="hero__bajada">Hamburguesas jugosas hechas al momento y armadas a tu gusto: sacale lo que no te va, sumale doble cheddar o panceta y acompañala con la bebida que quieras. Pedí online y seguí tu pedido desde que lo aceptamos hasta que llega a tu puerta.</p>
           <div class="hero__botones">
             <a class="boton boton--rojo boton--grande" href="#menu">Ver el menú</a>
             <button class="boton boton--crema boton--grande" type="button" id="hero-mis-pedidos">Mis pedidos</button>
           </div>
           <ul class="hero__datos">
             <li><strong>100%</strong> carne fresca</li>
-            <li><strong>Pan</strong> horneado cada día</li>
+            <li><strong>+40</strong> ingredientes y extras</li>
             <li><strong>4 pasos</strong> para seguir tu pedido</li>
           </ul>
         </div>
@@ -74,6 +74,7 @@
             <button type="button" class="filtro" data-tipo="principal" aria-pressed="false">Hamburguesas</button>
             <button type="button" class="filtro" data-tipo="combo" aria-pressed="false">Combos</button>
             <button type="button" class="filtro" data-tipo="postre" aria-pressed="false">Postres</button>
+            <button type="button" class="filtro" data-tipo="bebida" aria-pressed="false">Bebidas</button>
           </div>
         </div>
         <div class="grilla" id="grilla-platos" aria-live="polite" aria-busy="true">
@@ -97,12 +98,19 @@
         <div class="seccion__encabezado">
           <h2 id="titulo-admin">Panel de administración</h2>
           <div class="filtros" role="tablist" aria-label="Paneles de administración">
-            <button type="button" class="filtro" role="tab" id="pestana-pedidos" aria-controls="panel-pedidos" aria-selected="true" data-panel="pedidos">Pedidos</button>
+            <button type="button" class="filtro" role="tab" id="pestana-resumen" aria-controls="panel-resumen" aria-selected="true" data-panel="resumen">Resumen</button>
+            <button type="button" class="filtro" role="tab" id="pestana-pedidos" aria-controls="panel-pedidos" aria-selected="false" data-panel="pedidos">Pedidos</button>
             <button type="button" class="filtro" role="tab" id="pestana-platos" aria-controls="panel-platos" aria-selected="false" data-panel="platos">Platos</button>
+            <button type="button" class="filtro" role="tab" id="pestana-ingredientes" aria-controls="panel-ingredientes" aria-selected="false" data-panel="ingredientes">Ingredientes</button>
+            <button type="button" class="filtro" role="tab" id="pestana-usuarios" aria-controls="panel-usuarios" aria-selected="false" data-panel="usuarios">Usuarios</button>
           </div>
         </div>
 
-        <div class="panel" id="panel-pedidos" role="tabpanel" aria-labelledby="pestana-pedidos">
+        <div class="panel" id="panel-resumen" role="tabpanel" aria-labelledby="pestana-resumen">
+          <div id="resumen-admin" aria-live="polite"></div>
+        </div>
+
+        <div class="panel" id="panel-pedidos" role="tabpanel" aria-labelledby="pestana-pedidos" hidden>
           <div class="panel__herramientas">
             <div class="filtros filtros--chicos" id="filtros-estado" role="group" aria-label="Filtrar pedidos por estado"></div>
             <button class="boton boton--crema" type="button" id="actualizar-pedidos">Actualizar</button>
@@ -111,7 +119,7 @@
         </div>
 
         <div class="panel" id="panel-platos" role="tabpanel" aria-labelledby="pestana-platos" hidden>
-          <div class="admin-platos">
+          <div class="admin-platos admin-platos--ancho">
             <form class="formulario tarjeta-borde" id="form-plato" novalidate>
               <h3 id="titulo-form-plato">Nuevo plato</h3>
               <label>Tipo
@@ -119,17 +127,24 @@
                   <option value="principal">Hamburguesa (principal)</option>
                   <option value="combo">Combo</option>
                   <option value="postre">Postre</option>
+                  <option value="bebida">Bebida</option>
                 </select>
               </label>
               <label>Nombre
                 <input name="nombre" maxlength="70" required autocomplete="off">
               </label>
-              <label>Precio (en pesos, sin decimales)
+              <label>Precio base (en pesos, sin decimales)
                 <input name="precio" type="number" min="0" step="1" inputmode="numeric" required>
               </label>
               <label>Descripción
                 <textarea name="descripcion" maxlength="400" rows="4" required></textarea>
               </label>
+              <fieldset class="editor-opciones">
+                <legend>Ingredientes y extras</legend>
+                <p class="ayuda"><strong>Viene</strong>: lo trae el plato y el cliente lo puede quitar. <strong>Extra máx.</strong>: cuántas unidades puede sumar, pagando el precio del ingrediente.</p>
+                <input class="buscador" type="search" id="buscar-opcion" placeholder="Buscar ingrediente…" aria-label="Buscar ingrediente">
+                <div class="editor-opciones__lista" id="lista-opciones-plato"></div>
+              </fieldset>
               <p class="formulario__error" id="error-form-plato" role="alert" hidden></p>
               <div class="formulario__botones">
                 <button class="boton boton--rojo" type="submit" id="guardar-plato">Crear plato</button>
@@ -138,6 +153,44 @@
             </form>
             <div class="tabla-platos" id="tabla-platos" aria-live="polite"></div>
           </div>
+        </div>
+
+        <div class="panel" id="panel-ingredientes" role="tabpanel" aria-labelledby="pestana-ingredientes" hidden>
+          <div class="admin-platos">
+            <form class="formulario tarjeta-borde tarjeta-borde--fija" id="form-ingrediente" novalidate>
+              <h3 id="titulo-form-ingrediente">Nuevo ingrediente</h3>
+              <label>Nombre
+                <input name="nombre" maxlength="60" required autocomplete="off">
+              </label>
+              <label>Precio como extra <small>(en pesos; 0 = sin cargo)</small>
+                <input name="precio" type="number" min="0" step="1" inputmode="numeric" required>
+              </label>
+              <label class="casilla">
+                <input name="disponible" type="checkbox" checked>
+                Disponible <small>(si está agotado no se ofrece como extra)</small>
+              </label>
+              <p class="formulario__error" id="error-form-ingrediente" role="alert" hidden></p>
+              <div class="formulario__botones">
+                <button class="boton boton--rojo" type="submit" id="guardar-ingrediente">Crear ingrediente</button>
+                <button class="boton boton--crema" type="button" id="cancelar-ingrediente" hidden>Cancelar edición</button>
+              </div>
+            </form>
+            <div class="columna-lista">
+              <input class="buscador" type="search" id="buscar-ingrediente" placeholder="Buscar ingrediente…" aria-label="Buscar ingrediente">
+              <div class="tabla-platos" id="lista-ingredientes" aria-live="polite"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" id="panel-usuarios" role="tabpanel" aria-labelledby="pestana-usuarios" hidden>
+          <div class="panel__herramientas">
+            <div class="filtros filtros--chicos" id="filtros-usuarios" role="group" aria-label="Filtrar usuarios por rol"></div>
+            <div class="panel__derecha">
+              <input class="buscador" type="search" id="buscar-usuario" placeholder="Buscar por nombre o email…" aria-label="Buscar usuario">
+              <button class="boton boton--crema" type="button" id="actualizar-usuarios">Actualizar</button>
+            </div>
+          </div>
+          <div class="tabla-platos" id="lista-usuarios" aria-live="polite"></div>
         </div>
       </div>
     </section>
@@ -150,7 +203,7 @@
         <span>KING SCIARRA</span>
       </div>
       <p>Av. Siempre Hambrienta 742 · Todos los días de 12 a 24 h</p>
-      <p class="pie__nota">Hamburguesería ficticia · Proyecto académico con API REST (consigna BurgerTIC)</p>
+      <p class="pie__nota">Hamburguesería ficticia · Proyecto académico con API REST (basado en la consigna BurgerTIC)</p>
     </div>
   </footer>
 
@@ -166,6 +219,76 @@
         <p class="cajon__aviso" id="aviso-carrito" hidden></p>
         <button class="boton boton--rojo boton--ancho" type="button" id="confirmar-pedido">Confirmar pedido</button>
       </footer>
+    </div>
+  </dialog>
+
+  <dialog class="modal modal--ancho" id="modal-personalizar" aria-labelledby="titulo-personalizar">
+    <form class="personalizar" id="form-personalizar" novalidate>
+      <button class="boton-cerrar personalizar__cerrar" type="button" data-cerrar aria-label="Cerrar">×</button>
+      <div class="personalizar__cuerpo">
+        <div class="personalizar__cabecera">
+          <img id="imagen-personalizar" src="images/burgers/nueva-hamburguesa.svg" alt="" width="160" height="120">
+          <div>
+            <span class="chip" id="tipo-personalizar"></span>
+            <h2 id="titulo-personalizar">Armala a tu gusto</h2>
+            <p id="descripcion-personalizar"></p>
+            <p class="personalizar__base">Precio base <strong id="precio-base-personalizar"></strong></p>
+          </div>
+        </div>
+
+        <fieldset class="personalizar__grupo" id="grupo-incluidos">
+          <legend>Viene con <small>destildá lo que no quieras</small></legend>
+          <div class="opciones" id="lista-incluidos"></div>
+        </fieldset>
+
+        <fieldset class="personalizar__grupo" id="grupo-extras">
+          <legend>Sumale extras</legend>
+          <div class="opciones" id="lista-extras"></div>
+        </fieldset>
+
+        <fieldset class="personalizar__grupo" id="grupo-bebidas">
+          <legend>¿Le sumás una bebida?</legend>
+          <div class="chips-bebidas" id="lista-bebidas"></div>
+        </fieldset>
+
+        <label class="personalizar__aclaracion">Aclaraciones para la cocina <small>(opcional)</small>
+          <textarea name="aclaracion" maxlength="140" rows="2" placeholder="Ej.: bien cocida, cortada al medio"></textarea>
+        </label>
+      </div>
+
+      <footer class="personalizar__pie">
+        <div class="cantidad" role="group" aria-label="Cantidad">
+          <button type="button" id="restar-personalizar" aria-label="Quitar uno">−</button>
+          <output id="cantidad-personalizar">1</output>
+          <button type="button" id="sumar-personalizar" aria-label="Agregar uno">+</button>
+        </div>
+        <div class="personalizar__total">
+          <small id="unitario-personalizar"></small>
+          <button class="boton boton--rojo" type="submit"><span id="confirmar-personalizar-texto">Agregar al pedido</span> · <span id="total-personalizar">$ 0</span></button>
+        </div>
+      </footer>
+    </form>
+  </dialog>
+
+  <dialog class="modal" id="modal-usuario" aria-labelledby="titulo-usuario">
+    <div class="modal__interior">
+      <button class="boton-cerrar" type="button" data-cerrar aria-label="Cerrar">×</button>
+      <h2 id="titulo-usuario">Editar usuario</h2>
+      <form class="formulario" id="form-usuario" novalidate>
+        <div class="formulario__fila">
+          <label>Nombre
+            <input name="nombre" maxlength="50" autocomplete="off" required>
+          </label>
+          <label>Apellido
+            <input name="apellido" maxlength="50" autocomplete="off" required>
+          </label>
+        </div>
+        <label>Email
+          <input name="email" type="email" maxlength="256" autocomplete="off" required>
+        </label>
+        <p class="formulario__error" id="error-form-usuario" role="alert" hidden></p>
+        <button class="boton boton--rojo boton--ancho" type="submit">Guardar cambios</button>
+      </form>
     </div>
   </dialog>
 

@@ -4,26 +4,35 @@
  * - Lo usa main.js al iniciar el servidor.
  * - También se puede ejecutar a mano: npm run db:init
  *
- * No borra tablas ni datos: el script solo usa CREATE ... IF NOT EXISTS.
+ * No borra tablas ni datos: el script solo usa CREATE ... IF NOT EXISTS y
+ * migraciones con IF EXISTS / IF NOT EXISTS.
  */
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const { pool, conTransaccion, verificarConexion, cerrarConexiones } = require('../dbconfig');
 
 const RUTA_SCHEMA = path.join(__dirname, 'schema.sql');
-const TABLAS = ['platos', 'usuarios', 'pedidos', 'platosxpedidos'];
+const TABLAS = [
+  'platos',
+  'usuarios',
+  'pedidos',
+  'platosxpedidos',
+  'ingredientes',
+  'ingredientesxplatos',
+  'personalizaciones',
+];
 
 /** Ejecuta schema.sql dentro de una transacción (o se crea todo, o no se crea nada). */
 async function inicializarBaseDeDatos() {
   const sql = await fs.readFile(RUTA_SCHEMA, 'utf8');
   await conTransaccion(async (cliente) => {
     // Evita que dos instancias del servidor ejecuten el script al mismo tiempo
-    await cliente.query("SELECT pg_advisory_xact_lock(hashtext('cufambre:schema'))");
+    await cliente.query("SELECT pg_advisory_xact_lock(hashtext('kingsciarra:schema'))");
     await cliente.query(sql);
   });
 }
 
-/** Devuelve cuáles de las cuatro tablas existen en la base conectada. */
+/** Devuelve cuáles de las tablas del proyecto existen en la base conectada. */
 async function listarTablasExistentes() {
   const { rows } = await pool.query(
     `SELECT table_name

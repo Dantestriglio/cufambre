@@ -1,12 +1,17 @@
-// Panel de administración: gestión de pedidos (estados y bajas) y del catálogo de platos.
+// Panel de administración: resumen, pedidos (estados y bajas), platos con sus
+// ingredientes, catálogo de ingredientes y usuarios.
 // Solo se muestra a administradores; igualmente la API valida el rol en cada operación.
 import { api } from './api.js';
 import { obtenerToken } from './sesion.js';
 import { esc, formatearPrecio, avisar } from './utilidades.js';
 import { imagenDePlato } from './imagenes.js';
 import { ESTADOS, etiquetaEstado, tarjetaPedido } from './vistas.js';
+import * as ingredientes from './adminIngredientes.js';
+import * as usuarios from './adminUsuarios.js';
+import { renderizarResumen } from './adminResumen.js';
 
-const TIPOS = { principal: 'Hamburguesa', combo: 'Combo', postre: 'Postre' };
+const TIPOS = { principal: 'Hamburguesa', combo: 'Combo', postre: 'Postre', bebida: 'Bebida' };
+const MAXIMO_EXTRA = 10;
 const $ = (id) => document.getElementById(id);
 
 let pedidos = [];
@@ -32,6 +37,20 @@ export function iniciarAdmin(opciones) {
   $('form-plato').addEventListener('submit', guardarPlato);
   $('cancelar-edicion').addEventListener('click', terminarEdicion);
   $('tabla-platos').addEventListener('click', manejarAccionPlato);
+  $('buscar-opcion').addEventListener('input', filtrarOpciones);
+  // Resalta los ingredientes que el plato usa a medida que se marcan
+  $('lista-opciones-plato').addEventListener('input', (evento) => {
+    const fila = evento.target.closest('.fila-opcion');
+    fila?.classList.toggle('fila-opcion--usada', opcionDeFila(fila) !== null);
+  });
+
+  ingredientes.iniciar({
+    alCambiar: async () => {
+      await recargarMenu();
+      renderizarEditorOpciones(leerOpcionesDelEditor());
+    },
+  });
+  usuarios.iniciar({ alCambiar: actualizarResumen });
 }
 
 function mostrarPanel(nombre) {
@@ -42,11 +61,28 @@ function mostrarPanel(nombre) {
   }
 }
 
+/** Carga todo lo que usa el panel. */
+export async function cargarTodo() {
+  await Promise.all([
+    cargarPedidos({ silencioso: true }),
+    usuarios.cargar({ silencioso: true }),
+    ingredientes.cargar({ silencioso: true }),
+  ]);
+  if (idEnEdicion === null) renderizarEditorOpciones([]);
+}
+
 export function limpiarAdmin() {
   pedidos = [];
   $('lista-pedidos-admin').innerHTML = '';
   $('filtros-estado').innerHTML = '';
+  $('resumen-admin').innerHTML = '';
+  usuarios.limpiar();
+  ingredientes.limpiar();
   terminarEdicion();
+}
+
+function actualizarResumen() {
+  renderizarResumen($('resumen-admin'), { pedidos, usuarios: usuarios.obtenerUsuarios() });
 }
 
 // ---------- Pedidos ----------
@@ -54,6 +90,7 @@ export async function cargarPedidos({ silencioso = false } = {}) {
   try {
     pedidos = await api.todosLosPedidos(obtenerToken());
     renderizarPedidos();
+    actualizarResumen();
   } catch (error) {
     if (!silencioso && error.status !== 401) avisar(error.message, 'error');
   }
@@ -137,7 +174,54 @@ function mostrarError(mensaje) {
   parrafo.hidden = !mensaje;
 }
 
-function empezarEdicion(id) {
+// ----- Editor de ingredientes del plato -----
+
+/** Dibuja una fila por ingrediente del catálogo, con lo que ya tiene asignado el plato. */
+function renderizarEditorOpciones(asignadas) {
+  const catalogo = ingredientes.obtenerIngredientes();
+  const porId = new Map(asignadas.map((opcion) => [opcion.id, opcion]));
+  const ordenados = [...catalogo].sort(
+    (a, b) => Number(porId.has(b.id)) - Number(porId.has(a.id)) || a.nombre.localeCompare(b.nombre, 'es')
+  );
+  $('lista-opciones-plato').innerHTML = ordenados.length
+    ? ordenados
+        .map((ingrediente) => {
+          const opcion = porId.get(ingrediente.id);
+          const id = Number(ingrediente.id);
+          return `<div class="fila-opcion${opcion ? ' fila-opcion--usada' : ''}" data-opcion="${id}" data-nombre="${esc(ingrediente.nombre.toLowerCase())}">
+            <span class="fila-opcion__nombre">${esc(ingrediente.nombre)}
+              <small>${ingrediente.precio > 0 ? `+ ${formatearPrecio(ingrediente.precio)}` : 'sin cargo'}${ingrediente.disponible ? '' : ' · agotado'}</small>
+            </span>
+            <label class="fila-opcion__control"><input type="checkbox" data-incluye ${opcion?.incluido ? 'checked' : ''}> Viene</label>
+            <label class="fila-opcion__control">Extra máx.
+              <input type="number" min="0" max="${MAXIMO_EXTRA}" step="1" inputmode="numeric" data-maximo value="${Number(opcion?.maximo ?? 0)}">
+            </label>
+          </div>`;
+        })
+        .join('')
+    : '<p class="ayuda">Todavía no hay ingredientes. Cargalos en la pestaña Ingredientes.</p>';
+  filtrarOpciones();
+}
+
+function filtrarOpciones() {
+  const texto = $('buscar-opcion').value.trim().toLowerCase();
+  for (const fila of $('lista-opciones-plato').querySelectorAll('[data-opcion]')) {
+    fila.hidden = Boolean(texto) && !fila.dataset.nombre.includes(texto);
+  }
+}
+
+/** { id, incluido, maximo } de una fila, o null si el ingrediente no se usa en el plato. */
+function opcionDeFila(fila) {
+  const incluido = fila.querySelector('[data-incluye]').checked;
+  const maximo = Math.min(MAXIMO_EXTRA, Math.max(0, Math.trunc(Number(fila.querySelector('[data-maximo]').value) || 0)));
+  return incluido || maximo > 0 ? { id: Number(fila.dataset.opcion), incluido, maximo } : null;
+}
+
+function leerOpcionesDelEditor() {
+  return [...$('lista-opciones-plato').querySelectorAll('[data-opcion]')].map(opcionDeFila).filter(Boolean);
+}
+
+async function empezarEdicion(id) {
   const plato = platos.find((item) => item.id === id);
   if (!plato) return;
   idEnEdicion = id;
@@ -150,8 +234,15 @@ function empezarEdicion(id) {
   $('guardar-plato').textContent = 'Guardar cambios';
   $('cancelar-edicion').hidden = false;
   mostrarError('');
-  form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  form.scrollIntoView({ behavior: 'smooth', block: 'start' });
   form.elements.nombre.focus({ preventScroll: true });
+  $('lista-opciones-plato').innerHTML = '<p class="ayuda">Cargando ingredientes…</p>';
+  try {
+    const asignadas = await api.opcionesDePlato(id);
+    if (idEnEdicion === id) renderizarEditorOpciones(asignadas);
+  } catch (error) {
+    mostrarError(`No se pudieron cargar los ingredientes del plato: ${error.message}`);
+  }
 }
 
 function terminarEdicion() {
@@ -161,6 +252,7 @@ function terminarEdicion() {
   $('guardar-plato').textContent = 'Crear plato';
   $('cancelar-edicion').hidden = true;
   mostrarError('');
+  renderizarEditorOpciones([]);
 }
 
 async function guardarPlato(evento) {
@@ -177,21 +269,28 @@ async function guardarPlato(evento) {
     mostrarError('Completá el nombre, la descripción y un precio entero mayor o igual a 0.');
     return;
   }
+  const opciones = leerOpcionesDelEditor();
 
   const boton = $('guardar-plato');
   boton.disabled = true;
   try {
-    if (idEnEdicion) {
-      const actualizado = await api.actualizarPlato(obtenerToken(), idEnEdicion, plato);
-      avisar(`Se guardaron los cambios de "${actualizado.nombre}"`, 'exito');
-    } else {
-      const creado = await api.crearPlato(obtenerToken(), plato);
-      avisar(`Se agregó "${creado.nombre}" al menú`, 'exito');
-    }
+    const guardado = idEnEdicion
+      ? await api.actualizarPlato(obtenerToken(), idEnEdicion, plato)
+      : await api.crearPlato(obtenerToken(), plato);
+    // Si el plato se creó pero fallan los ingredientes, queda en edición para reintentar
+    idEnEdicion = guardado.id;
+    await api.guardarOpcionesDePlato(obtenerToken(), guardado.id, opciones);
+    avisar(`Se guardó "${guardado.nombre}" con ${opciones.length} ${opciones.length === 1 ? 'ingrediente' : 'ingredientes'}`, 'exito');
     terminarEdicion();
-    await recargarMenu();
+    await Promise.all([recargarMenu(), ingredientes.cargar({ silencioso: true })]);
   } catch (error) {
     if (error.status !== 401) mostrarError(error.message);
+    if (idEnEdicion) {
+      $('titulo-form-plato').textContent = `Editar plato #${idEnEdicion}`;
+      $('guardar-plato').textContent = 'Guardar cambios';
+      $('cancelar-edicion').hidden = false;
+      await recargarMenu();
+    }
   } finally {
     boton.disabled = false;
   }

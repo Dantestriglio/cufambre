@@ -1,8 +1,9 @@
 /**
- * routes/authRouter.js — Endpoints públicos de /auth (no requieren token).
+ * routes/authRouter.js — Endpoints de /auth. Registro e ingreso son públicos.
  */
 const express = require('express');
 const { authService } = require('../services/services');
+const { verificarToken } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -16,6 +17,11 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   const sesion = await authService.iniciarSesion(req.body);
   res.status(200).json(sesion);
+});
+
+// GET /auth/perfil — datos actuales del usuario del token (incluido el rol, leído de la base)
+router.get('/perfil', verificarToken, (req, res) => {
+  res.status(200).json(req.usuario);
 });
 
 module.exports = router;

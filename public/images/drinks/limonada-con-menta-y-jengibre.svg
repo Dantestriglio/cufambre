@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300" role="img" aria-label="Limonada con Menta y Jengibre">
+<title>Limonada con Menta y Jengibre</title>
+<ellipse cx="200" cy="272" rx="92" ry="11" fill="#292016" opacity=".14"/>
+<path d="M214 150 L236 46 H258" stroke="#292016" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+<path d="M214 150 L236 46 H258" stroke="#FFC83D" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+<path d="M138 98 H262 L248 262 Q247 268 240 268 H160 Q153 268 152 262 Z" fill="#FFFDF6" stroke="#292016" stroke-width="4" stroke-linejoin="round"/>
+<path d="M143 126 Q170 118 200 126 Q230 134 257 126 L246 258 Q245 262 240 262 H160 Q155 262 154 258 Z" fill="#FFE680"/>
+<rect x="162" y="128" width="34" height="32" rx="7" transform="rotate(-12 179 144)" fill="#FFFFFF" fill-opacity=".72" stroke="#292016" stroke-width="3"/>
+<rect x="204" y="136" width="32" height="30" rx="7" transform="rotate(14 220 151)" fill="#FFFFFF" fill-opacity=".72" stroke="#292016" stroke-width="3"/>
+<path d="M150 112 Q156 84 182 86 Q178 110 150 112 Z" fill="#5DB043" stroke="#292016" stroke-width="3" stroke-linejoin="round"/>
+<path d="M170 110 Q186 90 204 100 Q192 118 170 110 Z" fill="#3E9A36" stroke="#292016" stroke-width="3" stroke-linejoin="round"/>
+<path d="M150 112 L160 250" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" opacity=".85"/>
+<g transform="translate(262 100) rotate(18)"><circle r="30" fill="#FFE14D" stroke="#292016" stroke-width="4"/><circle r="22" fill="#FFF3A6"/>
+<path d="M0 0 L0 -22 M0 0 L19 -11 M0 0 L19 11 M0 0 L0 22 M0 0 L-19 11 M0 0 L-19 -11" stroke="#FFE14D" stroke-width="3"/><path d="M-30 0 H-6" stroke="#292016" stroke-width="4"/></g>
+<path d="M138 98 H262" stroke="#292016" stroke-width="4" stroke-linecap="round"/>
+</svg>

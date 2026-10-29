@@ -1,5 +1,6 @@
 /**
- * controllers/pedidosController.js — Acceso a datos de Pedidos y PlatosXPedidos.
+ * controllers/pedidosController.js — Acceso a datos de Pedidos, PlatosXPedidos
+ * y Personalizaciones.
  *
  * Las funciones que forman parte de una transacción reciben el cliente `db`
  * que entrega conTransaccion(); el resto usa el pool.
@@ -10,14 +11,32 @@ const { pool } = require('../dbconfig');
 // aunque el servidor de la base (Neon) trabaje en UTC.
 const ZONA_HORARIA_NEGOCIO = 'America/Argentina/Buenos_Aires';
 
-// Un pedido con su cliente y sus platos (id, cantidad y datos descriptivos)
-// armados en una sola consulta con json_agg.
+// Extras agregados o ingredientes quitados de un ítem (pp), como array JSON
+const personalizacion = (accion, campos) => `(
+  SELECT COALESCE(json_agg(json_build_object(${campos}) ORDER BY pz.id), '[]'::json)
+    FROM Personalizaciones pz
+    JOIN Ingredientes i ON i.id = pz.id_ingrediente
+   WHERE pz.id_item = pp.id AND pz.accion = '${accion}'
+)`;
+
+// Un pedido con su cliente y sus platos armados en una sola consulta con json_agg.
+// precio es el de una unidad con sus extras; los ítems anteriores a la
+// personalización no tienen precio_unitario y usan el precio actual del plato.
 const SELECT_PEDIDOS = `
   SELECT p.id, p.id_usuario, p.fecha, p.estado,
          json_build_object('nombre', u.nombre, 'apellido', u.apellido, 'email', u.email) AS usuario,
          COALESCE(
            json_agg(
-             json_build_object('id', pl.id, 'cantidad', pp.cantidad, 'nombre', pl.nombre, 'precio', pl.precio)
+             json_build_object(
+               'id', pl.id,
+               'cantidad', pp.cantidad,
+               'nombre', pl.nombre,
+               'tipo', pl.tipo,
+               'precio', COALESCE(pp.precio_unitario, pl.precio),
+               'extras', ${personalizacion('agregar', "'id', i.id, 'nombre', i.nombre, 'cantidad', pz.cantidad, 'precio', pz.precio")},
+               'sin', ${personalizacion('quitar', "'id', i.id, 'nombre', i.nombre")},
+               'aclaracion', pp.aclaracion
+             )
              ORDER BY pp.id
            ) FILTER (WHERE pp.id IS NOT NULL),
            '[]'::json
@@ -64,10 +83,23 @@ async function crearPedido(idUsuario, db) {
   return rows[0].id;
 }
 
-async function agregarPlatoAlPedido(idPedido, idPlato, cantidad, db) {
+/** Inserta un ítem { id, cantidad, precioUnitario, aclaracion } del pedido. Devuelve el id del ítem. */
+async function agregarPlatoAlPedido(idPedido, item, db) {
+  const { rows } = await db.query(
+    `INSERT INTO PlatosXPedidos (id_pedido, id_plato, cantidad, precio_unitario, aclaracion)
+     VALUES ($1, $2, $3, $4, $5)
+     RETURNING id`,
+    [idPedido, item.id, item.cantidad, item.precioUnitario, item.aclaracion]
+  );
+  return rows[0].id;
+}
+
+/** Guarda un extra agregado o un ingrediente quitado de un ítem. */
+async function agregarPersonalizacion(idItem, { idIngrediente, accion, cantidad, precio }, db) {
   await db.query(
-    'INSERT INTO PlatosXPedidos (id_pedido, id_plato, cantidad) VALUES ($1, $2, $3)',
-    [idPedido, idPlato, cantidad]
+    `INSERT INTO Personalizaciones (id_item, id_ingrediente, accion, cantidad, precio)
+     VALUES ($1, $2, $3, $4, $5)`,
+    [idItem, idIngrediente, accion, cantidad, precio]
   );
 }
 
@@ -100,6 +132,7 @@ module.exports = {
   obtenerEstado,
   crearPedido,
   agregarPlatoAlPedido,
+  agregarPersonalizacion,
   actualizarEstado,
   eliminarPlatosDelPedido,
   eliminarPedido,

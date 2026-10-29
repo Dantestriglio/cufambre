@@ -4,7 +4,14 @@
  */
 const { describe, test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
-const { iniciarApi, crearUsuario, crearPlatoDePrueba, inicializarBaseDeDatos, pool } = require('./helpers');
+const {
+  iniciarApi,
+  crearUsuario,
+  crearPlatoDePrueba,
+  crearIngredienteDePrueba,
+  inicializarBaseDeDatos,
+  pool,
+} = require('./helpers');
 const { construirConfiguracion, describirConexion, ErrorDeConfiguracion } = require('../dbconfig');
 const { platosController } = require('../controllers/controllers');
 const { TABLAS } = require('../database/init');
@@ -88,7 +95,7 @@ describe('dbconfig: configuración de la conexión a Neon', () => {
   });
 
   test('sslmode=disable solo se acepta con un PostgreSQL local', () => {
-    const config = construirConfiguracion({ DATABASE_URL: 'postgresql://ana:clave@localhost:5433/cufambre?sslmode=disable' });
+    const config = construirConfiguracion({ DATABASE_URL: 'postgresql://ana:clave@localhost:5433/kingsciarra?sslmode=disable' });
     assert.equal(config.ssl, false);
     assert.equal(config.port, 5433);
   });
@@ -109,7 +116,7 @@ describe('dbconfig: configuración de la conexión a Neon', () => {
 });
 
 describe('Base de datos: tablas, claves foráneas y restricciones', () => {
-  test('database/schema.sql crea las cuatro tablas con los campos y tipos de la consigna', async () => {
+  test('database/schema.sql crea las tablas de la consigna y las de personalización', async () => {
     const { rows } = await pool.query(
       `SELECT table_name, column_name, data_type, character_maximum_length, is_nullable, is_identity
          FROM information_schema.columns
@@ -131,7 +138,30 @@ describe('Base de datos: tablas, claves foráneas y restricciones', () => {
         precio: 'integer',
         descripcion: 'character varying(400)',
       },
-      platosxpedidos: { id: 'integer', id_pedido: 'integer', id_plato: 'integer', cantidad: 'integer' },
+      platosxpedidos: {
+        id: 'integer',
+        id_pedido: 'integer',
+        id_plato: 'integer',
+        cantidad: 'integer',
+        precio_unitario: 'integer',
+        aclaracion: 'character varying(140)',
+      },
+      ingredientes: { id: 'integer', nombre: 'character varying(60)', precio: 'integer', disponible: 'boolean' },
+      ingredientesxplatos: {
+        id: 'integer',
+        id_plato: 'integer',
+        id_ingrediente: 'integer',
+        incluido: 'boolean',
+        maximo: 'integer',
+      },
+      personalizaciones: {
+        id: 'integer',
+        id_item: 'integer',
+        id_ingrediente: 'integer',
+        accion: 'character varying(10)',
+        cantidad: 'integer',
+        precio: 'integer',
+      },
       usuarios: {
         id: 'integer',
         nombre: 'character varying(50)',
@@ -159,8 +189,12 @@ describe('Base de datos: tablas, claves foráneas y restricciones', () => {
     assert.deepEqual(
       rows.map((fila) => `${fila.tabla}.${fila.columna} -> ${fila.referida}.${fila.columna_referida} (${fila.al_borrar})`),
       [
+        'ingredientesxplatos.id_ingrediente -> ingredientes.id (c)', // c = CASCADE
+        'ingredientesxplatos.id_plato -> platos.id (c)',
         'pedidos.id_usuario -> usuarios.id (r)', // r = RESTRICT
-        'platosxpedidos.id_pedido -> pedidos.id (c)', // c = CASCADE
+        'personalizaciones.id_ingrediente -> ingredientes.id (r)',
+        'personalizaciones.id_item -> platosxpedidos.id (c)',
+        'platosxpedidos.id_pedido -> pedidos.id (c)',
         'platosxpedidos.id_plato -> platos.id (r)',
       ]
     );
@@ -169,19 +203,21 @@ describe('Base de datos: tablas, claves foráneas y restricciones', () => {
         WHERE contype = 'p' AND conrelid::regclass::text = ANY($1::text[]) ORDER BY tabla`,
       [TABLAS]
     );
-    assert.deepEqual(primarias.map((fila) => fila.tabla), ['pedidos', 'platos', 'platosxpedidos', 'usuarios']);
+    assert.deepEqual(primarias.map((fila) => fila.tabla), [...TABLAS].sort());
   });
 
   test('las restricciones rechazan tipos, precios, estados, cantidades y emails inválidos', async () => {
     const insertarPlato = (tipo, precio) =>
       pool.query(`INSERT INTO Platos (tipo, nombre, precio, descripcion) VALUES ($1, 'TEST x', $2, 'x')`, [tipo, precio]);
-    await assert.rejects(insertarPlato('bebida', 100), { code: '23514' });
+    await assert.rejects(insertarPlato('ensalada', 100), { code: '23514' });
     await assert.rejects(insertarPlato('principal', -1), { code: '23514' });
+    const bebida = await insertarPlato('bebida', 100);
+    assert.equal(bebida.rowCount, 1, 'bebida es un tipo válido');
 
     const { rows } = await pool.query(
       `INSERT INTO Usuarios (nombre, apellido, email, password) VALUES ('Test', 'SQL', $1, 'hash')
        RETURNING id, admin`,
-      [`sql.${Date.now()}@test.cufambre`]
+      [`sql.${Date.now()}@test.kingsciarra`]
     );
     assert.equal(rows[0].admin, false, 'admin es false por defecto');
     await assert.rejects(
@@ -202,6 +238,46 @@ describe('Base de datos: tablas, claves foráneas y restricciones', () => {
     await assert.rejects(
       pool.query('INSERT INTO PlatosXPedidos (id_pedido, id_plato, cantidad) VALUES ($1, 2147483647, 1)', [pedido.rows[0].id]),
       { code: '23503' }
+    );
+  });
+
+  test('las restricciones de ingredientes rechazan precios, máximos, acciones y nombres repetidos inválidos', async () => {
+    const plato = await crearPlatoDePrueba();
+    const ingrediente = await crearIngredienteDePrueba({ nombre: 'Restricciones' });
+    await assert.rejects(pool.query(`INSERT INTO Ingredientes (nombre, precio) VALUES ('TEST negativo', -1)`), { code: '23514' });
+    await assert.rejects(
+      pool.query('INSERT INTO Ingredientes (nombre, precio) VALUES (UPPER($1), 0)', [ingrediente.nombre]),
+      { code: '23505' },
+      'el nombre es único sin distinguir mayúsculas'
+    );
+
+    const asignar = (incluido, maximo) =>
+      pool.query('INSERT INTO IngredientesXPlatos (id_plato, id_ingrediente, incluido, maximo) VALUES ($1, $2, $3, $4)', [
+        plato.id,
+        ingrediente.id,
+        incluido,
+        maximo,
+      ]);
+    await assert.rejects(asignar(false, 0), { code: '23514' }, 'sin incluir ni permitir extras no tiene sentido');
+    await assert.rejects(asignar(true, 11), { code: '23514' });
+    await asignar(true, 2);
+    await assert.rejects(asignar(false, 1), { code: '23505' }, 'un ingrediente figura una sola vez por plato');
+
+    const { rows } = await pool.query(
+      `INSERT INTO Usuarios (nombre, apellido, email, password) VALUES ('Test', 'SQL', $1, 'hash') RETURNING id`,
+      [`ing.${Date.now()}@test.kingsciarra`]
+    );
+    const pedido = await pool.query('INSERT INTO Pedidos (id_usuario) VALUES ($1) RETURNING id', [rows[0].id]);
+    const item = await pool.query(
+      'INSERT INTO PlatosXPedidos (id_pedido, id_plato, cantidad) VALUES ($1, $2, 1) RETURNING id',
+      [pedido.rows[0].id, plato.id]
+    );
+    await assert.rejects(
+      pool.query(`INSERT INTO Personalizaciones (id_item, id_ingrediente, accion) VALUES ($1, $2, 'duplicar')`, [
+        item.rows[0].id,
+        ingrediente.id,
+      ]),
+      { code: '23514' }
     );
   });
 
