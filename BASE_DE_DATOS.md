@@ -1,6 +1,6 @@
-# 🗄️ King Sciarra · Base de datos
+# 🗄️ Hopper Burger · Base de datos
 
-Este documento describe las **7 tablas** de la API de King Sciarra: las 4 de la consigna BurgerTIC (Platos, Usuarios, Pedidos y PlatosXPedidos) y las 3 que agrega la **personalización de platos** (Ingredientes, IngredientesXPlatos y Personalizaciones). Para cada una: campos, tipos, claves primarias (PK), claves foráneas (FK) y restricciones.
+Este documento describe las **7 tablas** de la API de Hopper Burger: las 4 de la consigna BurgerTIC (Platos, Usuarios, Pedidos y PlatosXPedidos) y las 3 que agrega la **personalización de platos** (Ingredientes, IngredientesXPlatos y Personalizaciones). Para cada una: campos, tipos, claves primarias (PK), claves foráneas (FK) y restricciones.
 
 > El SQL está en [`database/schema.sql`](database/schema.sql) (lo ejecuta el servidor al iniciar) y, junto con el menú de ejemplo, en [`database/neon_setup.sql`](database/neon_setup.sql), listo para pegar en el SQL Editor de Neon o Vercel.
 
@@ -176,7 +176,7 @@ npm run db:seed                                   # usa el .env: crea/actualiza 
 psql "$DATABASE_URL" -f database/neon_setup.sql
 ```
 
-Los dos caminos se pueden repetir: no borran ni duplican datos, y también **actualizan una base de la versión anterior (CUFAMBRE)** agregando lo nuevo.
+Los dos caminos se pueden repetir: no borran ni duplican datos, y también **actualizan una base de la versión anterior (Hopper Burger)** agregando lo nuevo.
 
 > **Importante:** PostgreSQL guarda en minúsculas los nombres escritos sin comillas. En el panel vas a ver `platos`, `usuarios`, `ingredientesxplatos`, etc. Igual podés consultar escribiendo `SELECT * FROM Platos;`. No uses comillas dobles (`"Platos"`), porque así PostgreSQL busca el nombre con mayúscula y no lo encuentra.
 
